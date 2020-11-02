@@ -1,16 +1,20 @@
 ﻿#menu_load = 0
 #menu_save = 1
-
 #menu_quit = 2
 #menu_chunkBorders = 10
+#menu_narrowHeight = 12
 #menu_define_marker = 20
 #menu_remove_marker = 21
 #menu_del_except = 22
 #menu_del_only = 23
 #menu_nolocalmods = 24
+
+
 #Font_about_title = 10
 #Font_about_version = 11
 #Font_about_text = 12
+
+
 LoadFont(#Font_about_title,"Palatino Linotype",16)
 LoadFont(#Font_about_version,"Palatino Linotype",10)
 LoadFont(#Font_about_text,"Palatino Linotype",12)
@@ -43,6 +47,10 @@ Procedure CreateMenuEntries()
   ResetList(worlds())
   While(NextElement(Worlds()))
     MenuItem(100+ListIndex(Worlds()),Worlds())
+    If GetMenuItemText(0,100+ListIndex(Worlds())) = g_LastWorld
+      SetMenuItemState(0,100+ListIndex(Worlds()),#True)
+    EndIf
+    
   Wend
   CloseSubMenu()
  
@@ -51,9 +59,9 @@ Procedure CreateMenuEntries()
   
   MenuTitle("Visuals")
   MenuItem(#menu_chunkBorders,"Visible Chunkborders")
-  SetMenuItemState(0,10,g_chunkborders)
-  MenuItem(12, "Narrow Render Height")
-  SetMenuItemState(0,12,g_restrictHeight)
+  SetMenuItemState(0,#menu_chunkBorders,g_chunkborders)
+  MenuItem(#menu_narrowHeight, "Narrow Render Height")
+  SetMenuItemState(0,#menu_narrowHeight,g_restrictHeight)
   OpenSubMenu("Shadows")
   MenuItem(17, "None")
   MenuItem(18, "Simple")
@@ -100,7 +108,21 @@ Procedure CreateMenuEntries()
    MenuItem(91,"Download most recent Version")
    MenuItem(92,"View all currently known custom blocks")
    MenuItem(93,"About")
-EndProcedure
+ EndProcedure
+ 
+ Procedure DisableMenuInteraction(state)
+   Shared Worlds()
+   For i=0 To 20
+     DisableMenuItem(0,i,state)
+   Next
+   PushListPosition(worlds())
+   ResetList(Worlds())
+   While(NextElement(worlds()))
+     DisableMenuItem(0,100+ListIndex(worlds()),state)
+   Wend
+   PopListPosition(worlds())
+ EndProcedure
+ 
 
 
 Procedure HandleMenuEvents(evMenu)
@@ -111,22 +133,23 @@ Procedure HandleMenuEvents(evMenu)
       While(NextElement(worlds()))
         If(evMenu = 100+ListIndex(worlds()))
           If(g_saveDir+g_LastWorld <> g_saveDir+worlds()) ; is it really worth the effort??
-            
-            
-            ;g_ChunkLoadingPaused = #True
+            SetMenuItemState(0,100+ListIndex(worlds()),#True)
+            g_ChunkLoadingPaused = #True
             StopChunkloading()
             g_LastWorld = worlds()
             ;LockMutex(Mutex)
             ClearMap(chunks())
-            ;UnlockMutex(Mutex)
             If(Not GetChunkList(g_saveDir+g_LastWorld+"/", @playerpos.pos))
               MessageRequester("Something is wrong","This world doesn't seem to have enough chunks to be worth loading... (<10)")
             EndIf
             RebuildWorld()
+            ;UnlockMutex(Mutex)
             MoveStart(@playerpos)
             StartChunkloading()
-           ; g_ChunkLoadingPaused = #False
+            g_ChunkLoadingPaused = #False
           EndIf
+        Else
+          SetMenuItemState(0,100+ListIndex(worlds()),#False)
         EndIf
       Wend
     Else
@@ -141,7 +164,7 @@ Procedure HandleMenuEvents(evMenu)
             MoveNode(#ToolBlock,Round(CameraX(0),#PB_Round_Up),Round(CameraY(0),#PB_Round_Up),Round(CameraZ(0),#PB_Round_Up),#PB_Absolute)
             MoveNode(#ToolBlock,CameraDirectionX(0)*(schBox\sx),CameraDirectionY(0)*schBox\sy/3,CameraDirectionZ(0)*(schBox\sz),#PB_Relative)
             MoveNode(#ToolBlock,Round(NodeX(#ToolBlock),#PB_Round_Up)-(schBox\sx-1)*0.25,Round(NodeY(#ToolBlock),#PB_Round_Up)-(schBox\sy-1)*0.25,Round(NodeZ(#ToolBlock),#PB_Round_Up)-(schBox\sz-1)*0.25,#PB_Absolute)
-    
+            ;initBlockSubstWindow()
             schBox\x1 = NodeX(#ToolBlock) - (schBox\sx-1)/4
             schBox\y1 = NodeY(#ToolBlock) - (schBox\sy-1)/4
             schBox\z1 = NodeZ(#ToolBlock) - (schBox\sz-1)/4
@@ -181,7 +204,7 @@ Procedure HandleMenuEvents(evMenu)
           Else
             g_chunkborders = 1
           EndIf
-          SetMenuItemState(0, 10, g_chunkborders)
+          SetMenuItemState(0, #menu_chunkBorders, g_chunkborders)
           ;StopChunkloading()
           g_ChunkLoadingPaused = #True
           RebuildWorld()
@@ -192,13 +215,13 @@ Procedure HandleMenuEvents(evMenu)
             WritePlayerPos(g_saveDir+g_LastWorld+"/",CameraX(0),CameraY(0),CameraZ(0))
             MessageRequester("Info","OK, prepare yourself to wake up in foreign lands...")
           EndIf
-        Case 12:
+        Case #menu_narrowHeight:
           If g_restrictHeight
             g_restrictHeight = 0
           Else
             g_restrictHeight = 1
           EndIf
-          SetMenuItemState(0, 12, g_restrictHeight)
+          SetMenuItemState(0, #menu_narrowHeight, g_restrictHeight)
         Case 13:
           g_viewdistance = #distance_far
           SetMenuItemState(0,13,1)
@@ -378,13 +401,13 @@ Procedure HandleMenuEvents(evMenu)
           EndIf
           
         Case 90:
-          RunProgram("http://el-wa.org/cyubevr/quickstart.htm", "", "")
+          RunProgram("http://cyube3dit.el-wa.org/index.php?action=quickstart", "", "")
         Case 91:
-          RunProgram("http://el-wa.org/cyubevr/quickstart.htm#Version", "", "")
+          RunProgram("http://cyube3dit.el-wa.org/index.php?action=download", "", "")
         Case 92:
-          RunProgram("http://el-wa.org/cyubevr/customblocks.php", "", "")  
+          RunProgram("http://cyube3dit.el-wa.org/index.php?action=customblocks", "", "")  
         Case 93:
-          aboutWnd = OpenWindow(#PB_Any,0,0,600,350,"About CyubE3dit - The 3d cyubeVR world chunk extractor.", #PB_Window_WindowCentered | #PB_Window_Tool)
+          aboutWnd = OpenWindow(#PB_Any,0,0,600,350,"About CyubE3dit - CyubeVR swiss army knife.", #PB_Window_WindowCentered | #PB_Window_Tool)
           StickyWindow(aboutWnd,#True)
           
           txtHead=TextGadget(#PB_Any,10,10,580,35,"CyubE3dit",#PB_Text_Center)
@@ -406,8 +429,8 @@ Procedure HandleMenuEvents(evMenu)
     EndIf
   EndProcedure
   
-; IDE Options = PureBasic 5.70 LTS (Windows - x64)
-; CursorPosition = 371
-; FirstLine = 351
+; IDE Options = PureBasic 5.72 (Windows - x64)
+; CursorPosition = 166
+; FirstLine = 157
 ; Folding = -
 ; EnableXP

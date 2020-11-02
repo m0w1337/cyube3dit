@@ -8,8 +8,7 @@
 ; ------------------------------------------------------------
 ;
 
-#VERSION = "1.0.8."+#PB_Editor_BuildCount
-
+#VERSION = "1.0.9."+#PB_Editor_BuildCount
 
 #mode_init = -1
 #mode_normal = 0
@@ -145,11 +144,11 @@ Structure chunk
     z.f
   EndStructure
   
-  
 Structure chunkmesh
-  List chunkmesh.block()
+List chunkmesh.block()
 EndStructure
-workingBox.box
+
+
 Global Dim g_chunkArray.chunkmesh(#numthreads,16)
 Global g_exit = 0
 Global NewMap meshIDs.chunkmeshes(64)
@@ -207,13 +206,15 @@ LoadFont(0,"Palatino Linotype",5)
 LoadFont(1,"Palatino Linotype",25)
 #CameraSpeed  = 1
 #CameraSpeedSlow  = 0.15
+#Acceleration = 0.05
+#AccelerationMax = 4
 #MainWindow = 0
 #CloseButton = 0
 
 
 
 
-Define.f KeyX, KeyY, KeyZ, MouseX, MouseY, camRotX, camRotY, camShiftX, camShiftY, camZoom
+Define.f KeyX, accX, KeyY, accY, KeyZ, accZ, MouseX, MouseY, camRotX, camRotY, camShiftX, camShiftY, camZoom
 
 UsePNGImageDecoder()
 If Not InitEngine3D(#PB_Engine3D_DebugOutput) 
@@ -235,8 +236,8 @@ If(FileSize(GetLApplicationDataDirectory()+"CyubE3dit\save") <> -2)
   CreateDirectory(GetLApplicationDataDirectory()+"CyubE3dit\save")
 EndIf
 
-If FileSize("./prefs.ini") = -1
-  If CreatePreferences("./prefs.ini")
+If FileSize(GetLApplicationDataDirectory()+"CyubE3dit\prefs.ini") = -1
+  If CreatePreferences(GetLApplicationDataDirectory()+"CyubE3dit\prefs.ini")
     ClosePreferences()
   EndIf
 EndIf
@@ -251,7 +252,7 @@ Else
   g_steamAppsDir = g_steamAppsDir + "\steamapps\"
 EndIf
 
-If (OpenPreferences(".\prefs.ini"))
+If (OpenPreferences(GetLApplicationDataDirectory()+"CyubE3dit\prefs.ini"))
   g_saveDir.s = ReadPreferenceString("SaveDir", GetLApplicationDataDirectory()+"cyubeVR\Saved\WorldData\")
   g_instaLoadDir.s = ReadPreferenceString("InstaLoadDir", GetLApplicationDataDirectory()+"cyubeVR\Saved\WorldData_InstaLoad\")
   If g_steamAppsDir = ""
@@ -281,6 +282,7 @@ EndIf
 
 If(Not GetChunkList(g_saveDir+g_LastWorld+"/", @playerpos.pos))
   MessageRequester("No current World","There is no current world selected. Please select a world from the list.")
+  g_ChunkLoadingPaused = #True
 EndIf
 
 AntialiasingMode(#PB_AntialiasingMode_None)
@@ -293,7 +295,7 @@ AddStatusBarField(WindowWidth(0)/3)
 AddStatusBarField(WindowWidth(0)/3)
 StatusBarText(0,0,"Running...")
 StatusBarProgress(0,1,0)
-initBlockSubstWindow()
+
     g_restrictHeight = 0
     CreateMenuEntries()
     
@@ -318,7 +320,7 @@ initBlockSubstWindow()
     CreateLight(0, RGB(250, 250, 230), -100, 100, -100)
     CreateLight(1, RGB(250, 250, 230), -100, 100, 100)
     CameraBackColor(0,RGB(255,255,255))
-     
+    DisableMenuInteraction(#True)
     g_CBlockDB = ConnectBlockDatabase()
     generateBlockMeshes()
     
@@ -384,12 +386,13 @@ initBlockSubstWindow()
      HideToolBlock(#True)
 
    
-CompilerIf #PB_Compiler_Debugger = 0
+ CompilerIf #PB_Compiler_Debugger = 0
+   
    LoadCustomBlocks(g_steamAppsDir+"workshop\content\619500\",0)
    LoadCustomBlocks(g_steamAppsDir+"common\cyubeVR\cyubeVR\Mods\Blocks\",g_noLocalMods)
    StatusBarText(0,0,"Custom Blocks loaded!")
    StatusBarProgress(0,1,0)
-
+   DisableMenuInteraction(#False)
  CompilerEndIf
 
 CameraBackColor(0,RGB(100,100,255))
@@ -498,7 +501,16 @@ Repeat
     mposY = DesktopMouseY()
     wmposX = WindowMouseX(0)
     wmposY = WindowMouseY(0)
-    If(wmposX > 0 And wmposY > 0 And (mposX < WindowX(#progwind) Or mposX > WindowX(#progwind)+WindowWidth(#progwind,#PB_Window_FrameCoordinate) Or mposy < WindowY(#progwind) Or mposy > WindowY(#progwind)+WindowHeight(#progwind,#PB_Window_FrameCoordinate)))
+    If(wmposX > 0 And wmposY > 0)
+      If IsWindow(#BSubstWind)
+        If (mposX < WindowX(#BSubstWind) Or mposX > WindowX(#BSubstWind)+WindowWidth(#BSubstWind,#PB_Window_FrameCoordinate) Or mposy < WindowY(#BSubstWind) Or mposy > WindowY(#BSubstWind)+WindowHeight(#BSubstWind,#PB_Window_FrameCoordinate))
+          CatchAction = #True
+        EndIf
+      Else
+        CatchAction = #True
+      EndIf
+    EndIf
+    If CatchAction
       ReleaseMouse(#False)
       MouseCatch = #True
       If ExamineMouse()
@@ -643,31 +655,47 @@ Repeat
     movedelta = movedelta / 10
 
     If KeyboardPushed(#PB_Key_A) Or KeyboardPushed(#PB_Key_Left)
+      If AccX < #AccelerationMax
+        AccX + #Acceleration
+      EndIf
+      
       If(KeyboardPushed(#PB_Key_LeftShift))
-        KeyX = -#CameraSpeed * movedelta
+        KeyX = -#CameraSpeed * movedelta * AccX
       Else
-        KeyX = -#CameraSpeedSlow * movedelta
+        KeyX = -#CameraSpeedSlow * movedelta * AccX
       EndIf
     ElseIf KeyboardPushed(#PB_Key_D) Or KeyboardPushed(#PB_Key_Right)
-      If(KeyboardPushed(#PB_Key_LeftShift))
-        KeyX = #CameraSpeed * movedelta
-      Else
-        KeyX = #CameraSpeedSlow * movedelta
+      If AccX < #AccelerationMax
+        AccX + #Acceleration
       EndIf
+      If(KeyboardPushed(#PB_Key_LeftShift))
+        KeyX = #CameraSpeed * movedelta * AccX
+      Else
+        KeyX = #CameraSpeedSlow * movedelta * AccX
+      EndIf
+    Else
+      AccX = 0
     EndIf
     
     
     If KeyboardPushed(#PB_Key_W)
+      If AccY < #AccelerationMax
+        AccY + #Acceleration
+      EndIf
       If(KeyboardPushed(#PB_Key_LeftShift))
-        KeyY = -#CameraSpeed * movedelta
+        KeyY = -#CameraSpeed * movedelta * AccY
       Else
-        KeyY = -#CameraSpeedSlow * movedelta
+        KeyY = -#CameraSpeedSlow * movedelta * AccY
       EndIf
     ElseIf KeyboardPushed(#PB_Key_S)
+      If AccY < #AccelerationMax
+        AccY + #Acceleration
+      EndIf
       If(KeyboardPushed(#PB_Key_LeftShift))
-        KeyY = #CameraSpeed * movedelta
+        KeyY = #CameraSpeed * movedelta * AccY
       ElseIf(g_EditMode = #mode_insert And KeyboardPushed(#PB_Key_LeftControl))
         KeyY = 0
+        AccY = 0
         SaveModifiedChunk(SchematicFile,schBox\x1 + (schBox\sx-1)/4, schBox\y1 + (schBox\sy-1)/4, schBox\z1 + (schBox\sz-1)/4)
         g_EditMode = #mode_normal
         HideToolBlock(#True)
@@ -676,22 +704,32 @@ Repeat
           FreeStaticGeometry(schGeo\id)
         EndIf
       Else
-        KeyY = #CameraSpeedSlow * movedelta
+        KeyY = #CameraSpeedSlow * movedelta  * AccY
       EndIf
+    Else
+      AccY = 0
     EndIf
     
     If(KeyboardPushed(#PB_Key_Up))  Or KeyboardPushed(#PB_Key_R)  Or KeyboardPushed(#PB_Key_E)
+      If AccZ < #AccelerationMax
+        AccZ + #Acceleration
+      EndIf
        If(KeyboardPushed(#PB_Key_LeftShift))
-        CamShiftY = #CameraSpeed * movedelta
+        CamShiftY = #CameraSpeed * movedelta * AccZ
       Else
-        CamShiftY = #CameraSpeedSlow * movedelta
+        CamShiftY = #CameraSpeedSlow * movedelta * AccZ
       EndIf
     ElseIf(KeyboardPushed(#PB_Key_Down))  Or KeyboardPushed(#PB_Key_F)
-      If(KeyboardPushed(#PB_Key_LeftShift))
-        CamShiftY = -#CameraSpeed * movedelta
-      Else
-        CamShiftY = -#CameraSpeedSlow * movedelta
+      If AccZ < #AccelerationMax
+        AccZ + #Acceleration
       EndIf
+      If(KeyboardPushed(#PB_Key_LeftShift))
+        CamShiftY = -#CameraSpeed * movedelta * AccZ
+      Else
+        CamShiftY = -#CameraSpeedSlow * movedelta * AccZ
+      EndIf
+    Else
+      AccZ = 0
     EndIf
     RotateCamera(0, camRotY, camRotX, 0, #PB_Relative)
     If g_EditMode = #mode_cut
@@ -772,63 +810,62 @@ Repeat
 
   EndIf
 
-  If(event = #PB_Event_Gadget)
-    If EventGadget() = #BlockListIcon
-      If EventType() = #PB_EventType_LeftDoubleClick
-        
-      ElseIf EventType() = #PB_EventType_LeftClick
-        ResetList(BlockListIcon())
-        While NextElement(BlockListIcon())
-          If ListIndex(BlockListIcon()) = GetGadgetState(#BlockListIcon)
-            If BlockListIcon()\id = 66
-              If Not FindMapElement(CBlocks(),Str(BlockListIcon()\cblock))
-                addCustomBlock(BlockListIcon()\cblock)
-              EndIf
-                For i = 0 To 5
-                  If IsMaterial(CBlocks()\tex(i))
-                    SetMaterialColor(CBlocks()\tex(i),#PB_Material_DiffuseColor,RGBA(0,200,0,255))
-                    SetMaterialColor(CBlocks()\tex(i),#PB_Material_AmbientColor,RGBA(0,200,0,255))
-                    SetMaterialColor(CBlocks()\tex(i),#PB_Material_SpecularColor,RGBA(0,50,20,255))
-                  EndIf
-                Next
-            Else
-              For i = 0 To 5
-                If IsMaterial(SBlocks(BlockListIcon()\id)\tex(i))
-                  SetMaterialColor(SBlocks(BlockListIcon()\id)\tex(i),#PB_Material_DiffuseColor,RGBA(0,200,0,255))
-                  SetMaterialColor(SBlocks(BlockListIcon()\id)\tex(i),#PB_Material_AmbientColor,RGBA(0,200,0,255))
-                  SetMaterialColor(SBlocks(BlockListIcon()\id)\tex(i),#PB_Material_SpecularColor,RGBA(0,50,20,255))
-                EndIf
-              Next
-            EndIf
-            
-          Else
-            If BlockListIcon()\id = 66
-              If Not FindMapElement(CBlocks(),Str(BlockListIcon()\cblock))
-                addCustomBlock(BlockListIcon()\cblock)
-              EndIf
-                For i = 0 To 5
-                  If IsMaterial(CBlocks()\tex(i))
-                    SetMaterialColor(CBlocks()\tex(i),#PB_Material_DiffuseColor,RGBA(255,255,255,255))
-                    SetMaterialColor(CBlocks()\tex(i),#PB_Material_AmbientColor,RGBA(255,255,255,255))
-                    SetMaterialColor(CBlocks()\tex(i),#PB_Material_SpecularColor,RGBA(0,0,0,255))
-                  EndIf
-                Next
-            Else
-              For i = 0 To 5
-                If IsMaterial(SBlocks(BlockListIcon()\id)\tex(i))
-                  SetMaterialColor(SBlocks(BlockListIcon()\id)\tex(i),#PB_Material_DiffuseColor,RGBA(255,255,255,255))
-                  SetMaterialColor(SBlocks(BlockListIcon()\id)\tex(i),#PB_Material_AmbientColor,RGBA(255,255,255,255))
-                  SetMaterialColor(SBlocks(BlockListIcon()\id)\tex(i),#PB_Material_SpecularColor,RGBA(0,0,0,255))
-                EndIf
-              Next
-            EndIf
-          EndIf
-          
-        Wend
-        
-      EndIf
-    EndIf
-  EndIf
+;   If(event = #PB_Event_Gadget)
+;     If EventGadget() = #BlockListIcon
+;       If EventType() = #PB_EventType_LeftDoubleClick
+;         
+;       ElseIf EventType() = #PB_EventType_LeftClick
+;         ResetList(BlockListIcon())
+;         While NextElement(BlockListIcon())
+;           If ListIndex(BlockListIcon()) = GetGadgetState(#BlockListIcon)
+;             If BlockListIcon()\id = 66
+;               If Not FindMapElement(CBlocks(),Str(BlockListIcon()\cblock))
+;                 addCustomBlock(BlockListIcon()\cblock)
+;               EndIf
+;                 For i = 0 To 5
+;                   If IsMaterial(CBlocks()\tex(i))
+;                     SetMaterialColor(CBlocks()\tex(i),#PB_Material_DiffuseColor,RGBA(0,200,0,255))
+;                     SetMaterialColor(CBlocks()\tex(i),#PB_Material_AmbientColor,RGBA(0,200,0,255))
+;                     SetMaterialColor(CBlocks()\tex(i),#PB_Material_SpecularColor,RGBA(0,50,20,255))
+;                   EndIf
+;                 Next
+;             Else
+;               For i = 0 To 5
+;                 If IsMaterial(SBlocks(BlockListIcon()\id)\tex(i))
+;                   SetMaterialColor(SBlocks(BlockListIcon()\id)\tex(i),#PB_Material_DiffuseColor,RGBA(0,200,0,255))
+;                   SetMaterialColor(SBlocks(BlockListIcon()\id)\tex(i),#PB_Material_AmbientColor,RGBA(0,200,0,255))
+;                   SetMaterialColor(SBlocks(BlockListIcon()\id)\tex(i),#PB_Material_SpecularColor,RGBA(0,50,20,255))
+;                 EndIf
+;               Next
+;             EndIf
+;           Else
+;             If BlockListIcon()\id = 66
+;               If Not FindMapElement(CBlocks(),Str(BlockListIcon()\cblock))
+;                 addCustomBlock(BlockListIcon()\cblock)
+;               EndIf
+;                 For i = 0 To 5
+;                   If IsMaterial(CBlocks()\tex(i))
+;                     SetMaterialColor(CBlocks()\tex(i),#PB_Material_DiffuseColor,RGBA(255,255,255,255))
+;                     SetMaterialColor(CBlocks()\tex(i),#PB_Material_AmbientColor,RGBA(255,255,255,255))
+;                     SetMaterialColor(CBlocks()\tex(i),#PB_Material_SpecularColor,RGBA(0,0,0,255))
+;                   EndIf
+;                 Next
+;             Else
+;               For i = 0 To 5
+;                 If IsMaterial(SBlocks(BlockListIcon()\id)\tex(i))
+;                   SetMaterialColor(SBlocks(BlockListIcon()\id)\tex(i),#PB_Material_DiffuseColor,RGBA(255,255,255,255))
+;                   SetMaterialColor(SBlocks(BlockListIcon()\id)\tex(i),#PB_Material_AmbientColor,RGBA(255,255,255,255))
+;                   SetMaterialColor(SBlocks(BlockListIcon()\id)\tex(i),#PB_Material_SpecularColor,RGBA(0,0,0,255))
+;                 EndIf
+;               Next
+;             EndIf
+;           EndIf
+;           
+;         Wend
+;         
+;       EndIf
+;     EndIf
+;   EndIf
   
       
       
@@ -868,6 +905,7 @@ Until g_exit
 SavePrefs()
 
 g_exit = 1
+StopChunkloading()
 For i= 0 To #numthreads
   If IsThread(thread(i))        
     KillThread(thread(i))
@@ -882,7 +920,8 @@ End
 
 
 ; IDE Options = PureBasic 5.72 (Windows - x64)
-; CursorPosition = 19
+; CursorPosition = 818
+; FirstLine = 802
 ; Folding = -
 ; EnableXP
 ; Executable = test.exe

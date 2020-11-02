@@ -10,6 +10,7 @@ Procedure ConnectBlockDatabase()
   StatusBarProgress(0,1,#PB_ProgressBar_Unknown)
   dbconn = CreateThread(@ConnectDatabaseThread(),0)
   While(IsThread(dbconn))
+    StatusBarProgressUnknown(0,1)
     WindowEvent()
     Delay(10)
   Wend 
@@ -124,7 +125,6 @@ Procedure addCustomBlock(cID)
   CBlocks()\tex(0) = CreateMaterial(#PB_Any,TextureID(CBlocks()\tex(0)))
 EndProcedure
 ; IDE Options = PureBasic 5.72 (Windows - x64)
-; CursorPosition = 103
-; FirstLine = 73
+; CursorPosition = 12
 ; Folding = --
 ; EnableXP

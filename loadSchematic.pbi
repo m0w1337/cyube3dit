@@ -232,14 +232,14 @@ Procedure.l displayCYSchematic(filename.s,List schBlocks.block())
           If schBlocks()\id <> 66
             If lastEl <> schBlocks()\id
               lastEl = schBlocks()\id
-              AddBlockToList(SBlocks(schBlocks()\id)\name,schBlocks()\id,0)
+              ;AddBlockToList(SBlocks(schBlocks()\id)\name,schBlocks()\id,0)
             EndIf
           ElseIf lastCEl <> schBlocks()\cblock
             lastCEl = schBlocks()\cblock
             If Not FindMapElement(CBlocks(),Str(schBlocks()\cblock))
               addCustomBlock(schBlocks()\cblock)
             EndIf
-            AddBlockToList(CBlocks()\name,schBlocks()\id,schBlocks()\cblock)
+            ;AddBlockToList(CBlocks()\name,schBlocks()\id,schBlocks()\cblock)
           EndIf
         Wend
         ret = 1
@@ -604,7 +604,7 @@ If(OpenFile(0,"D:\m0\INGb\projekte\cyubeVR\castledepoindestev-2"))
 EndProcedure
 
 ; IDE Options = PureBasic 5.72 (Windows - x64)
-; CursorPosition = 239
-; FirstLine = 210
+; CursorPosition = 241
+; FirstLine = 216
 ; Folding = -
 ; EnableXP

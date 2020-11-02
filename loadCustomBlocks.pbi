@@ -7,12 +7,12 @@ Procedure LoadCustomBlocks(CustomBlockDir.s, noUpload)
   Shared CBlocks
   If noUpload = 0
     If Not g_CBlockDB
-      MessageRequester("","Connection to Database failed, custom block database could not be updated with your blocks!")
+      MessageRequester("","Connection to block database failed, custom block database could not be updated with your blocks!")
     EndIf
   EndIf
   If ExamineDirectory(0,CustomBlockDir,"*.*")
     While NextDirectoryEntry(0)
-      StatusBarProgress(0,1,MapSize(CBlocks()))
+      StatusBarProgressUnknown(0,1)
       If DirectoryEntryType(0) = #PB_DirectoryEntry_Directory And DirectoryEntryName(0) <> "." And DirectoryEntryName(0) <> ".."
         If FileSize(CustomBlockDir+DirectoryEntryName(0)+"\properties.json") > 0 And FileSize(CustomBlockDir+DirectoryEntryName(0)+"\textures\") = -2
           file = ReadFile(#PB_Any,CustomBlockDir+DirectoryEntryName(0)+"\properties.json")
@@ -229,7 +229,7 @@ EndProcedure
 
 
 ; IDE Options = PureBasic 5.72 (Windows - x64)
-; CursorPosition = 213
-; FirstLine = 172
+; CursorPosition = 9
+; FirstLine = 3
 ; Folding = -
 ; EnableXP

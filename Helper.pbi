@@ -1,4 +1,4 @@
-﻿#progwind = 10
+﻿#BSubstWind = 10
 #BlockListIcon = 100
 #blockPrevSize = 32
 
@@ -83,8 +83,17 @@ Procedure DrawTextEx(X.i, Y.i, Text.s)
        Y + TextHeight(" ")
      Wend
    Next
+ EndProcedure
+ 
+Procedure  StatusBarProgressUnknown(statusBar,Field)
+  Static prog = 0
+  StatusBarProgress(statusBar,Field,prog)
+  prog = prog+1
+  If prog=101
+    prog=0
+  EndIf
 EndProcedure
-
+  
 
 
 Procedure generateBlockMeshes()
@@ -382,7 +391,7 @@ Procedure generateBlockMeshes()
 EndProcedure
 
 Procedure SavePrefs()
-  If (OpenPreferences("./prefs.ini"))
+  If (OpenPreferences(GetLApplicationDataDirectory()+"CyubE3dit\prefs.ini"))
     WritePreferenceString("LastWorld",g_LastWorld)
     WritePreferenceString("SaveDir",g_saveDir)
     WritePreferenceString("InstaLoadDir", g_instaLoadDir)
@@ -427,7 +436,7 @@ Procedure.l GrabSpriteEx(sprite, x, y, width, height, mode=0)
 EndProcedure  
 
 
-Procedure SaveBlockPreview(BlockID, CBlockID, Upload,CBauthor.s)
+Procedure SaveBlockPreview(BlockID, CBlockID, noUpload,CBauthor.s)
   draw = 0
   If(BlockID = 66)
     If FindMapElement(CBlocks(),Str(CBlockID))
@@ -573,7 +582,7 @@ Procedure SaveBlockPreview(BlockID, CBlockID, Upload,CBauthor.s)
     EndIf
     While(WindowEvent())
     Wend
-    If g_CBlockDB And Upload And BlockID = 66
+    If g_CBlockDB And noUpload = 0 And BlockID = 66
       tmpblock.CBlocks
       If Not findCustomBlock(g_CBlockDB,CBlocks()\id,CBlocks()\name) Or g_ForceUpdate
         publishCustomBlock(g_CBlockDB,CBlocks()\id,CBlocks()\mode,CBlocks()\name,CBauthor.s)
@@ -595,7 +604,7 @@ Procedure LoadBlocks(Array blockArr.SBlocks(1), Map ABlockMap.SBlocks())
     Next
   Next
   ClearMap(ABlockMap())
-  If(LoadXML(0,"demo.xml"))
+  If(LoadXML(0,"blocks.xml"))
     If(XMLStatus(0) = #PB_XML_Success)
       *MainNode = MainXMLNode(0)      
       If *MainNode
@@ -911,13 +920,13 @@ Procedure.s ReadRegKey(OpenKey.l, SubKey.s, ValueName.s)
   
 
 Procedure initBlockSubstWindow()
-  OpenWindow(#progwind,0,0,250,750,"Block substitution",#PB_Window_WindowCentered | #PB_Window_Tool | #PB_Window_BorderLess,WindowID(0))
-  ResizeWindow(#progwind, WindowX(0,#PB_Window_InnerCoordinate), WindowY(#progwind,#PB_Window_InnerCoordinate)+20, #PB_Ignore, #PB_Ignore)
+  OpenWindow(#BSubstWind,0,0,250,750,"Block substitution",#PB_Window_WindowCentered | #PB_Window_Tool | #PB_Window_BorderLess,WindowID(0))
+  ResizeWindow(#BSubstWind, WindowX(0,#PB_Window_InnerCoordinate), WindowY(#BSubstWind,#PB_Window_InnerCoordinate)+20, #PB_Ignore, #PB_Ignore)
   ListIconGadget(#BlockListIcon,0,0,250,750,"Original Block",125,#PB_ListIcon_FullRowSelect)
   AddGadgetColumn(#BlockListIcon,1,"Substituted Block",125)
   BlockListIconIL = ImageList_Create_(#blockPrevSize,#blockPrevSize,#ILC_COLOR32| #ILC_MASK, 0, 100)
   SendMessage_(GadgetID(#BlockListIcon), #LVM_SETIMAGELIST, #LVSIL_SMALL, BlockListIconIL)
-  StickyWindow(#progwind, #True) 
+  StickyWindow(#BSubstWind, #True) 
 EndProcedure
 
 Procedure AddBlockToList(text.s,id,cid)
@@ -945,10 +954,8 @@ Procedure AddBlockToList(text.s,id,cid)
   Else
     ImageList_Add_(BlockListIconIL,ImageID(CreateImage(#PB_Any,#blockPrevSize,#blockPrevSize,32,RGB(255,255,0))),0)
   EndIf
-  
   lvi.LV_ITEM
   lvi\mask = #LVIF_IMAGE
-  
   For i = 0 To items
     lvi\iItem = i : lvi\iImage = i
     SendMessage_(GadgetID(#BlockListIcon),#LVM_SETITEM,0,lvi)
@@ -957,7 +964,7 @@ EndProcedure
 
   
 ; IDE Options = PureBasic 5.72 (Windows - x64)
-; CursorPosition = 920
-; FirstLine = 908
+; CursorPosition = 928
+; FirstLine = 915
 ; Folding = ----
 ; EnableXP

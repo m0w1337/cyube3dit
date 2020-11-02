@@ -7,7 +7,7 @@
   <section name="data">
     <explorer view="" pattern="0"/>
     <log show="1"/>
-    <lastopen date="2020-11-01 15:22" user="m0" host="DESKTOP-3MN1198"/>
+    <lastopen date="2020-11-02 20:44" user="m0" host="DESKTOP-3MN1198"/>
   </section>
   <section name="files">
     <file name="AsyncRenderer.pbi">
@@ -20,11 +20,11 @@
     </file>
     <file name="chunks.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="ef3704ccc18322e53177116e80a21bd3"/>
+      <fingerprint md5="8f3e297ffae36898ce6c70419f2aadee"/>
     </file>
     <file name="database.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="53c433cc5aaa0ce9cdee203ea9368f03"/>
+      <fingerprint md5="50ac6975b82f2c36cb986494ab81b296"/>
     </file>
     <file name="ddsUnpack.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
@@ -32,11 +32,11 @@
     </file>
     <file name="Helper.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="7a28f4961b073550edce08ad93b628e8"/>
+      <fingerprint md5="694b04f197f2a5ad85537c587ddaede9"/>
     </file>
     <file name="loadCustomBlocks.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="a488a097ffa06721b377229d3f7ff4a1"/>
+      <fingerprint md5="7e857f4a17f1d125c94a63a50541f743"/>
     </file>
     <file name="loadSchematic.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
@@ -48,7 +48,7 @@
     </file>
     <file name="menu.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="3cd651b0b96a9b05f42a2027f12da876"/>
+      <fingerprint md5="dc264017588b947ee3d03816085a319c"/>
     </file>
     <file name="SaveSchematic.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
@@ -56,7 +56,7 @@
     </file>
     <file name="WorldView.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="b1ece9e6f96b94f547906a80718cbc4f"/>
+      <fingerprint md5="cfccfff19319c052558789d98c9bf028"/>
     </file>
   </section>
   <section name="targets">
@@ -64,17 +64,17 @@
       <inputfile value="WorldView.pb"/>
       <outputfile value="Package\CyubeEdit.exe"/>
       <executable value="Package\CyubeEdit.exe"/>
-      <options thread="1" xpskin="1" debug="1"/>
+      <options thread="1" xpskin="1"/>
       <temporaryexe value="source"/>
-      <compilecount enable="1" value="1180"/>
-      <buildcount enable="1" value="39"/>
+      <compilecount enable="1" value="1224"/>
+      <buildcount enable="1" value="40"/>
       <versioninfo enable="1">
-        <field0 value="1,0,8,%BUILDCOUNT"/>
-        <field1 value="1,0,8,%BUILDCOUNT"/>
+        <field0 value="1,0,9,%BUILDCOUNT"/>
+        <field1 value="1,0,9,%BUILDCOUNT"/>
         <field2 value="Moritz Wagner"/>
         <field3 value="CyubeEdit"/>
-        <field4 value="1,0,8,%BUILDCOUNT"/>
-        <field5 value="1,0,8,%BUILDCOUNT"/>
+        <field4 value="1,0,9,%BUILDCOUNT"/>
+        <field5 value="1,0,9,%BUILDCOUNT"/>
         <field6 value="CyubE3dit"/>
         <field7 value="CyubE3dit"/>
         <field8 value="CyubE3dit"/>

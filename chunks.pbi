@@ -9,13 +9,15 @@
 #BLOCK_GLASS = 3
 
 Enumeration
-    #Right
-    #Left
-    #Forward
-    #Back
-    #Up
-    #Down
+  #Right
+  #Left
+  #Forward
+  #Back
+  #Up
+  #Down
 EndEnumeration
+  
+Declare DisableMenuInteraction(state)
 
 Global Dim CurrChunkData.b(31,31,799)
 
@@ -258,6 +260,7 @@ Macro AddBlockToGeo(GeoID,BBGeoID,SchBlocks,startx,starty,startz, showBorders)
 EndMacro
 
 Procedure.d GetChunkList(WorldDir.s, *player.pos)
+  ClearMap(chunks())
   If(ExamineDirectory(0,WorldDir,"*.important"))
     While NextDirectoryEntry(0)
       If DirectoryEntryType(0) = #PB_DirectoryEntry_File
@@ -744,6 +747,9 @@ If lib
             ClearList(g_chunkArray(threadnum,i)\chunkmesh())
           Next
           For x=0 To 31
+            If g_exit
+                Break
+              EndIf
             For y = 0 To 31
               memy = y*32
               For z = LowestZ To HighestZ
@@ -904,7 +910,6 @@ If lib
                       g_chunkArray(threadnum,z/75)\chunkmesh()\bb = bb
                       g_chunkArray(threadnum,z/75)\chunkmesh()\cblock = cblock
                     EndIf
-                    
                   EndIf
                 EndIf
               Next
@@ -966,35 +971,43 @@ Procedure farchunks(unused)
     EndIf
     
   Delay(10)  
-  ForEver
+  Until g_exit = 1
   
 EndProcedure
+
 
 Procedure StopChunkloading()
   SavePrefs()
   g_exit = 1
   running = 1
   start.q = ElapsedMilliseconds()
-  While running And ElapsedMilliseconds() - start < 5000
+  StatusBarText(0,0,"Please wait, stopping chunkloader threads")
+  DisableMenuInteraction(#True)
+  While running And ElapsedMilliseconds() - start < 10000
+    StatusBarProgressUnknown(0,1)
     running = 0
-    For i = 0 To #numthreads-1
-      If IsThread(thread(i+1))
+    While(WindowEvent())
+    Wend
+    For i = 0 To #numthreads
+      If IsThread(thread(i))
         running = 1
-      Else
-        Break
       EndIf
     Next
     Delay(10)
   Wend
-  For i= 0 To #numthreads-1 ;kill any leftover threads
-    If IsThread(thread(i+1))        
-      KillThread(thread(i+1))
+  For i= 0 To #numthreads ;kill any leftover threads
+    If IsThread(thread(i))        
+      MessageRequester("Error","Chunkloader thread Nb. "+Str(i)+" could not be stopped! This might end in a crash, sorry.")
     EndIf
   Next
+  StatusBarText(0,0,"Running...")
+  StatusBarProgress(0,1,0)
+  DisableMenuInteraction(#False)
   g_exit = 0
 EndProcedure
 
 Procedure StartChunkloading()
+  thread(0) = CreateThread(@farchunks(),0)
   For i= 0 To #numthreads-1
      thread(i+1) = CreateThread(@DiscriminateChunk(),i)
   Next
@@ -1017,7 +1030,7 @@ Procedure RebuildWorld()
   UnlockMutex(DelMutex)
 EndProcedure
 ; IDE Options = PureBasic 5.72 (Windows - x64)
-; CursorPosition = 91
-; FirstLine = 51
+; CursorPosition = 988
+; FirstLine = 966
 ; Folding = --
 ; EnableXP

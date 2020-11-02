@@ -553,10 +553,10 @@ SetXMLAttribute(item, "id", "88")
 SetXMLAttribute(item, "textype", "6")
 SetXMLAttribute(item, "texture0", "Sandbags.png")
 ; Save the xml tree into a xml file
-SaveXML(xml, "D:\m0\INGb\projekte\cyubeVR\demo.xml")
+SaveXML(xml, "D:\m0\INGb\projekte\cyubeVR\blocks.xml")
 
 ; IDE Options = PureBasic 5.72 (Windows - x64)
-; CursorPosition = 332
-; FirstLine = 324
+; CursorPosition = 555
+; FirstLine = 506
 ; EnableXP
 ; DisableDebugger
