@@ -328,7 +328,7 @@ Procedure drawChunk(meshnum,threadnum,x,y,resetMaterial)
   EndIf
    
   start.q = ElapsedMilliseconds()
-  While (ElapsedMilliseconds() - start) < 25
+  While (ElapsedMilliseconds() - start) < 100;25
     If IsStaticGeometry(currGeoID) And IsStaticGeometry(currBBGeoID)
       GeoStillPresent = 1
     Else
@@ -358,7 +358,7 @@ Procedure drawChunk(meshnum,threadnum,x,y,resetMaterial)
         EndIf
       ElseIf (NextElement(g_chunkArray(threadnum, lastpart(threadnum))\chunkmesh()) And GeoStillPresent)
         AddBlockToGeo(currGeoID,currBBGeoID,g_chunkArray(threadnum, lastpart(threadnum))\chunkmesh(),x,0,y,g_chunkborders)
-        added = 1
+        ;added = 1
         
       ElseIf(Not GeoStillPresent)  ;stop drawing this chunk as soon as the drawing was interrupted from a delete, because it shouldn't be visible in this case
         g_drawing(threadnum) = 3
@@ -952,25 +952,26 @@ Procedure farchunks(unused)
   Shared Mutex
   Shared DrawMutex
   Repeat
-    If TryLockMutex(DelMutex)
-      tmp = g_deleteChunk
-      If(tmp = -1)
-        ResetMap(visibleChunks())
-        While NextMapElement(visibleChunks())
-          If (Sqr(Pow(Abs(visibleChunks()\x-CameraX(0)),2)+Pow(Abs(visibleChunks()\y-CameraZ(0)),2)) > Sqr(g_viewdistance * 2*16*16)-g_viewdistance/4)
-            nodel = 0
-            If nodel = 0
-              g_deleteChunk = visibleChunks()\vis
-              DeleteMapElement(visibleChunks())
-            EndIf 
-            Break
-          EndIf
-        Wend
+    If g_ChunkLoadingPaused = #False
+      If TryLockMutex(DelMutex)
+        tmp = g_deleteChunk
+        If(tmp = -1)
+          ResetMap(visibleChunks())
+          While NextMapElement(visibleChunks())
+            If (Sqr(Pow(Abs(visibleChunks()\x-CameraX(0)),2)+Pow(Abs(visibleChunks()\y-CameraZ(0)),2)) > Sqr(g_viewdistance * 2*16*16)-g_viewdistance/4)
+              nodel = 0
+              If nodel = 0
+                g_deleteChunk = visibleChunks()\vis
+                DeleteMapElement(visibleChunks())
+              EndIf 
+              Break
+            EndIf
+          Wend
+        EndIf
+        UnlockMutex(DelMutex)
       EndIf
-      UnlockMutex(DelMutex)
     EndIf
-    
-  Delay(10)  
+    Delay(10)  
   Until g_exit = 1
   
 EndProcedure
@@ -1030,7 +1031,7 @@ Procedure RebuildWorld()
   UnlockMutex(DelMutex)
 EndProcedure
 ; IDE Options = PureBasic 5.72 (Windows - x64)
-; CursorPosition = 988
-; FirstLine = 966
+; CursorPosition = 973
+; FirstLine = 925
 ; Folding = --
 ; EnableXP

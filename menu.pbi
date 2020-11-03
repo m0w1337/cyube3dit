@@ -1,8 +1,17 @@
 ﻿#menu_load = 0
 #menu_save = 1
 #menu_quit = 2
+
 #menu_chunkBorders = 10
+#menu_setPPos = 11
 #menu_narrowHeight = 12
+#menu_viewFar = 13
+#menu_viewMed = 14
+#menu_viewShort = 15
+#menu_noCulling = 16
+#menu_shadows_none = 17
+#menu_shadows_simple = 18
+#menu_shadows_adv = 19
 #menu_define_marker = 20
 #menu_remove_marker = 21
 #menu_del_except = 22
@@ -18,7 +27,8 @@
 LoadFont(#Font_about_title,"Palatino Linotype",16)
 LoadFont(#Font_about_version,"Palatino Linotype",10)
 LoadFont(#Font_about_text,"Palatino Linotype",12)
-  NewList Worlds.s()
+
+NewList Worlds.s()
 
 Procedure CreateMenuEntries()
   Shared Worlds()
@@ -54,7 +64,7 @@ Procedure CreateMenuEntries()
   Wend
   CloseSubMenu()
  
-  MenuItem(11,"Set Playerposition")
+  MenuItem(#menu_setPPos,"Set Playerposition")
   
   
   MenuTitle("Visuals")
@@ -63,44 +73,44 @@ Procedure CreateMenuEntries()
   MenuItem(#menu_narrowHeight, "Narrow Render Height")
   SetMenuItemState(0,#menu_narrowHeight,g_restrictHeight)
   OpenSubMenu("Shadows")
-  MenuItem(17, "None")
-  MenuItem(18, "Simple")
-  MenuItem(19, "Advanced")
+  MenuItem(#menu_shadows_none, "None")
+  MenuItem(#menu_shadows_simple, "Simple")
+  MenuItem(#menu_shadows_adv, "Advanced")
   Select g_Shadows
     Case #PB_Shadow_Modulative
-      SetMenuItemState(0,17,0)
-      SetMenuItemState(0,18,1)
-      SetMenuItemState(0,19,0)
+      SetMenuItemState(0,#menu_shadows_none,0)
+      SetMenuItemState(0,#menu_shadows_simple,1)
+      SetMenuItemState(0,#menu_shadows_adv,0)
     Case #PB_Shadow_Additive
-      SetMenuItemState(0,17,0)
-      SetMenuItemState(0,18,0)
-      SetMenuItemState(0,19,1)
+      SetMenuItemState(0,#menu_shadows_none,0)
+      SetMenuItemState(0,#menu_shadows_simple,0)
+      SetMenuItemState(0,#menu_shadows_adv,1)
     Default
-      SetMenuItemState(0,17,1)
-      SetMenuItemState(0,18,0)
-      SetMenuItemState(0,19,0)
+      SetMenuItemState(0,#menu_shadows_none,1)
+      SetMenuItemState(0,#menu_shadows_simple,0)
+      SetMenuItemState(0,#menu_shadows_adv,0)
   EndSelect
   CloseSubMenu()
-  SetMenuItemState(0,12,g_restrictHeight)
-  MenuItem(16, "Make world Surface visible from inside blocks")
-  SetMenuItemState(0,16,g_DoubleDraw)
+  SetMenuItemState(0,#menu_narrowHeight,g_restrictHeight)
+  MenuItem(#menu_noCulling, "Make world Surface visible from inside blocks")
+  SetMenuItemState(0,#menu_noCulling,g_DoubleDraw)
   OpenSubMenu("Draw distance")
-  MenuItem(13, "Far")
-  MenuItem(14, "Medium")
-  MenuItem(15, "Short")
+  MenuItem(#menu_ViewFar, "Far")
+  MenuItem(#menu_viewMed, "Medium")
+  MenuItem(#menu_viewShort, "Short")
   Select g_viewdistance
     Case #distance_far:
-      SetMenuItemState(0,13,1)
-      SetMenuItemState(0,14,0)
-      SetMenuItemState(0,15,0)
+      SetMenuItemState(0,#menu_ViewFar,1)
+      SetMenuItemState(0,#menu_viewMed,0)
+      SetMenuItemState(0,#menu_viewShort,0)
     Case #distance_short
-      SetMenuItemState(0,13,0)
-      SetMenuItemState(0,14,0)
-      SetMenuItemState(0,15,1)
+      SetMenuItemState(0,#menu_ViewFar,0)
+      SetMenuItemState(0,#menu_viewMed,0)
+      SetMenuItemState(0,#menu_viewShort,1)
     Default:
-      SetMenuItemState(0,13,0)
-      SetMenuItemState(0,14,1)
-      SetMenuItemState(0,15,0)
+      SetMenuItemState(0,#menu_ViewFar,0)
+      SetMenuItemState(0,#menu_viewMed,1)
+      SetMenuItemState(0,#menu_viewShort,0)
    EndSelect
    CloseSubMenu()
    MenuTitle("Help")
@@ -168,7 +178,7 @@ Procedure HandleMenuEvents(evMenu)
             schBox\x1 = NodeX(#ToolBlock) - (schBox\sx-1)/4
             schBox\y1 = NodeY(#ToolBlock) - (schBox\sy-1)/4
             schBox\z1 = NodeZ(#ToolBlock) - (schBox\sz-1)/4
-            g_UpdateSchGeo = displayCYSchematic(SchematicFile, SchBlocks())
+            g_UpdateSchGeo = displayCYSchematic(SchematicFile, SchBlocks(),0)
             If(g_UpdateSchGeo)
               WorldShadows(#PB_Shadow_None)
             Else
@@ -210,7 +220,7 @@ Procedure HandleMenuEvents(evMenu)
           RebuildWorld()
           g_ChunkLoadingPaused = #False
           ;StartChunkloading()
-        Case 11:
+        Case #menu_setPPos:
           If MessageRequester("Info","This will update the in game player position to the current camera position. Please make sure you dont bake yourself in solid Rock."+Chr(10)+Chr(13)+"Do it?",#PB_MessageRequester_YesNo) = #PB_MessageRequester_Yes
             WritePlayerPos(g_saveDir+g_LastWorld+"/",CameraX(0),CameraY(0),CameraZ(0))
             MessageRequester("Info","OK, prepare yourself to wake up in foreign lands...")
@@ -222,29 +232,29 @@ Procedure HandleMenuEvents(evMenu)
             g_restrictHeight = 1
           EndIf
           SetMenuItemState(0, #menu_narrowHeight, g_restrictHeight)
-        Case 13:
+        Case #menu_viewFar:
           g_viewdistance = #distance_far
-          SetMenuItemState(0,13,1)
-          SetMenuItemState(0,14,0)
-          SetMenuItemState(0,15,0)
-        Case 14:
+          SetMenuItemState(0,#menu_viewFar,1)
+          SetMenuItemState(0,#menu_viewMed,0)
+          SetMenuItemState(0,#menu_viewShort,0)
+        Case #menu_viewMed:
           g_viewdistance = #distance_mid
-          SetMenuItemState(0,13,0)
-          SetMenuItemState(0,14,1)
-          SetMenuItemState(0,15,0)
-        Case 15:
+          SetMenuItemState(0,#menu_viewFar,0)
+          SetMenuItemState(0,#menu_viewMed,1)
+          SetMenuItemState(0,#menu_viewShort,0)
+        Case #menu_viewShort:
           g_viewdistance = #distance_short
-          SetMenuItemState(0,13,0)
-          SetMenuItemState(0,14,0)
-          SetMenuItemState(0,15,1)
-        Case 16:
+          SetMenuItemState(0,#menu_viewFar,0)
+          SetMenuItemState(0,#menu_viewMed,0)
+          SetMenuItemState(0,#menu_viewShort,1)
+        Case #menu_noCulling:
           If g_DoubleDraw
             g_DoubleDraw = 0
           Else
             g_DoubleDraw = 1
           EndIf
           SetMaterialCulling()
-          SetMenuItemState(0, 16, g_DoubleDraw)
+          SetMenuItemState(0, #menu_noCulling, g_DoubleDraw)
           If(g_Shadows  <> #PB_Shadow_None)
             ;StopChunkloading()
             g_ChunkLoadingPaused = #True
@@ -252,7 +262,7 @@ Procedure HandleMenuEvents(evMenu)
             g_ChunkLoadingPaused = #False
             ;StartChunkloading()
           EndIf
-        Case 17:
+        Case #menu_shadows_none:
           g_shadows = #PB_Shadow_None
           WorldShadows(g_shadows,0,0,0)
           ;StopChunkloading()
@@ -260,10 +270,10 @@ Procedure HandleMenuEvents(evMenu)
           RebuildWorld()
           g_ChunkLoadingPaused = #False
           ;StartChunkloading()
-          SetMenuItemState(0,17,1)
-          SetMenuItemState(0,18,0)
-          SetMenuItemState(0,19,0)
-        Case 18:
+          SetMenuItemState(0,#menu_shadows_none,1)
+          SetMenuItemState(0,#menu_shadows_simple,0)
+          SetMenuItemState(0,#menu_shadows_adv,0)
+        Case #menu_shadows_simple:
           g_shadows = #PB_Shadow_Modulative
           WorldShadows(g_shadows,30,RGB(150,150,170))
           ;StopChunkloading()
@@ -271,10 +281,10 @@ Procedure HandleMenuEvents(evMenu)
           RebuildWorld()
           g_ChunkLoadingPaused = #False
           ;StartChunkloading()
-          SetMenuItemState(0,17,0)
-          SetMenuItemState(0,18,1)
-          SetMenuItemState(0,19,0)
-        Case 19:
+          SetMenuItemState(0,#menu_shadows_none,0)
+          SetMenuItemState(0,#menu_shadows_simple,1)
+          SetMenuItemState(0,#menu_shadows_adv,0)
+        Case #menu_shadows_adv:
           g_shadows = #PB_Shadow_Additive
           WorldShadows(g_Shadows,25,RGB(10,10,30),256)
           ;StopChunkloading()
@@ -282,9 +292,9 @@ Procedure HandleMenuEvents(evMenu)
           RebuildWorld()
           g_ChunkLoadingPaused = #False
           ;StartChunkloading()
-          SetMenuItemState(0,17,0)
-          SetMenuItemState(0,18,0)
-          SetMenuItemState(0,19,1)
+          SetMenuItemState(0,#menu_shadows_none,0)
+          SetMenuItemState(0,#menu_shadows_simple,0)
+          SetMenuItemState(0,#menu_shadows_adv,1)
         Case #menu_define_marker:
           g_EditMode = #mode_chunksel_nodel
           updateMsgBox(g_EditMode, currentchunk\vis)
@@ -430,7 +440,7 @@ Procedure HandleMenuEvents(evMenu)
   EndProcedure
   
 ; IDE Options = PureBasic 5.72 (Windows - x64)
-; CursorPosition = 166
-; FirstLine = 157
+; CursorPosition = 75
+; FirstLine = 53
 ; Folding = -
 ; EnableXP

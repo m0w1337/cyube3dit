@@ -138,7 +138,7 @@ Procedure GetSingleBlockID(*ret.CBlocks,x.f,z.f,y.f)
     FreeMemory(*srcbuff)
     FreeMemory(*chunkmem)
   ElseIf chunk\vis = -1
-    MessageRequester("Error","The chunk for the Block at  X="+StrF(x,1)+" y="+StrF(y,1)+" z="+StrF(z,1)+" could not be found.")
+    FillMemory(*chunkmem,32*32*800,#BLOCK_AIR)
   EndIf
   bx = (x-chunk\x)*2
   by = (y-chunk\y)*2*32
@@ -190,7 +190,11 @@ Procedure SaveCyubeAreaToFile(x.f,z.f,y.f,sx,sz,sy)
   thischunnk.xy
   For blockx = 0 To sx
     For blocky = 0 To sy
-      getChunk(@thischunnk,blockx/2+startX,blocky/2+startY)
+      cbx.f = blockx
+      cbx = cbx/2
+      cby.f = blocky
+      cby = cby/2
+      getChunk(@thischunnk,cbx+startX,cby+startY)
       affectedChunks(Str(thischunnk\vis))\vis = thischunnk\vis
       affectedChunks()\x = thischunnk\x
       affectedChunks()\y = thischunnk\y
@@ -200,6 +204,10 @@ Procedure SaveCyubeAreaToFile(x.f,z.f,y.f,sx,sz,sy)
   If Not *schMem
     MessageRequester("Out of memory","Sorry, not enough free memory available to save this map portion, try to lower the viewdistance, or reduce schematic size.")
     FreeMap(affectedChunks())
+    FreeList(customBlocks.block())
+    FreeList(torchRot.block())
+    CloseFile(file)
+    DeleteFile(filename)
     ProcedureReturn 0
   EndIf
   endX.f = x + (sx-1)/4
@@ -232,33 +240,34 @@ Procedure SaveCyubeAreaToFile(x.f,z.f,y.f,sx,sz,sy)
     px.f=lsx - startX
     While px <= lex - startX
       py.f=lsy - startY
-      While py <= ley - startY
+      While py <= leY - startY
         pz.f= 0
         While pz <= endZ - startZ
-          bx.f = px + startX
-          mx.f = px*2
-          my.f = py*2
+          
+          mx = px*2
+          my = py*2
           my = my * sx
-          mz.f = pz*2
-          mz = Mz*sx*sy
-           by.f = py + startY
-           bz.f = pz + startZ
-           id= GetSingleBlockID(@custom,bx,bz,by)
-           PokeB(*schMem +mx+my+mz,id)
-           If id = 66
-             AddElement(customBlocks())
-             customBlocks()\cblock = custom\id
-             customBlocks()\x = px*2
-             customBlocks()\y = py*2
-             customBlocks()\z = pz*2
-           ElseIf SBlocks(id)\type = #BLOCKTYPE_Torch
-             AddElement(torchRot())
-             torchRot()\cblock = custom\id
-             torchRot()\x = px*2
-             torchRot()\y = py*2
-             torchRot()\z = pz*2
-           EndIf
-           done = done+1
+          mz = pz*2
+          mz = mz * sx * sy
+          bx.f = px + startX
+          by.f = py + startY
+          bz.f = pz + startZ
+          id= GetSingleBlockID(@custom,bx,bz,by)
+          PokeB(*schMem +mx+my+mz,id)
+          If id = 66
+            AddElement(customBlocks())
+            customBlocks()\cblock = custom\id
+            customBlocks()\x = px*2
+            customBlocks()\y = py*2
+            customBlocks()\z = pz*2
+          ElseIf SBlocks(id)\type = #BLOCKTYPE_Torch
+            AddElement(torchRot())
+            torchRot()\cblock = custom\id
+            torchRot()\x = px*2
+            torchRot()\y = py*2
+            torchRot()\z = pz*2
+          EndIf
+          done = done+1
           If(ElapsedMilliseconds()-lastU.q > 500)
             lastU = ElapsedMilliseconds()
             prcnt = ((done)*100)/areasize
@@ -273,7 +282,19 @@ Procedure SaveCyubeAreaToFile(x.f,z.f,y.f,sx,sz,sy)
       px = px + 0.5
     Wend
   Wend  ;nextChunk
-  *schMem = ReAllocateMemory(*schMem,MemorySize(*schMem)+ListSize(customBlocks())*10+4+ListSize(torchRot())*7+4)
+  *schMem2 = ReAllocateMemory(*schMem,MemorySize(*schMem)+ListSize(customBlocks())*10+4+ListSize(torchRot())*7+4)
+  If Not *schMem2
+    FreeMemory(*schMem)
+    FreeMap(affectedChunks())
+    FreeList(customBlocks.block())
+    FreeList(torchRot.block())
+    CloseFile(file)
+    MessageRequester("Out of memory","Sorry, not enough free memory available to save this map portion, try to lower the viewdistance, or reduce schematic size.")
+    DeleteFile(filename)
+    ProcedureReturn 0
+  Else
+    *schMem = *schMem2
+  EndIf
   memoffs = sx*sy*sz
   If(ListSize(customBlocks()))
     PokeL(*schMem+memoffs,ListSize(customBlocks()))
@@ -313,23 +334,32 @@ Procedure SaveCyubeAreaToFile(x.f,z.f,y.f,sx,sz,sy)
   EndIf
   lib = OpenLibrary(#PB_Any, ".\lz4.dll")
   If lib
-    *dstbuff = AllocateMemory(3000000)
-    destsize.i = CallCFunction(lib, "LZ4_compress_default" ,*schMem,*dstbuff,MemorySize(*schMem),MemorySize(*dstbuff))
-    WriteData(file,*dstbuff,destsize)
-    FreeMemory(*dstbuff)
+    *dstbuff = AllocateMemory(50000000)
+    If Not *dstbuff
+      MessageRequester("Out of memory","Sorry, not enough free memory available to save this map portion, try to lower the viewdistance, or reduce schematic size.")
+    Else  
+      destsize.i = CallCFunction(lib, "LZ4_compress_default" ,*schMem,*dstbuff,MemorySize(*schMem),MemorySize(*dstbuff))
+      WriteData(file,*dstbuff,destsize)
+      FreeMemory(*dstbuff)
+    EndIf
+    
     CloseLibrary(lib)
   Else
     MessageRequester("Error","Lz4.dll not found, or not accessible. This file should have been shipped with the tool, try to re-download.")
   EndIf
   WriteLong(file,MemorySize(*schMem))
   CloseFile(file)
+  FreeMemory(*schMem)
+  FreeMap(affectedChunks())
+  FreeList(customBlocks.block())
+  FreeList(torchRot.block())
   CloseWindow(progressWindow)
   ProcedureReturn 1
 
 EndProcedure
 
 ; IDE Options = PureBasic 5.72 (Windows - x64)
-; CursorPosition = 253
-; FirstLine = 241
+; CursorPosition = 250
+; FirstLine = 232
 ; Folding = -
 ; EnableXP

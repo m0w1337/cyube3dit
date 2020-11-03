@@ -374,7 +374,24 @@ Procedure SaveModifiedChunk(cySchFile.s,x.f,z.f,y.f)
       thischunk.xy
       For blockx = 0 To sx
         For blocky = 0 To sy
-          getChunk(@thischunk,blockx/2+startX,blocky/2+startY)
+          cbx.f = blockx
+          cbx = cbx/2
+          cby.f = blocky
+          cby = cby/2
+          getChunk(@thischunnk,cbx+startX,cby+startY)
+          If(thischunk\vis = -1)
+            MessageRequester("Error","The insertion overlaps at least one not yet generated chunk, only generated chunnks can be manipulated!")
+            If(*destbuff)
+              FreeMemory(*destbuff)
+            EndIf
+            If *srcbuff
+              FreeMemory(*srcbuff)
+            EndIf
+            CloseFile(file)
+            CloseWindow(progressWindow)
+            ProcedureReturn 0
+          EndIf
+          
           affectedChunks(Str(thischunk\vis))\vis = thischunk\vis
           affectedChunks()\x = thischunk\x
           affectedChunks()\y = thischunk\y
@@ -413,26 +430,28 @@ Procedure SaveModifiedChunk(cySchFile.s,x.f,z.f,y.f)
           While py <= ley - startY
             pz.f= 0
             While pz <= endZ - startZ
-              bx.f = px + startX
-              mx.f = px*2
-              my.f = py*2
+              mx = px*2
+              my = py*2
               my = my * sx
-              mz.f = pz*2
-              mz = mz*sx*sy
-               by.f = py + startY
-               bz.f = pz + startZ
+              mz = pz*2
+              mz = mz * sx * sy
+              bx.f = px + startX
+              by.f = py + startY
+              bz.f = pz + startZ
                id = PeekB(*destbuff+mx+my+mz)
                If(id = 66)
                  If(FindMapElement(customBlocks(),Str(mx)+","+Str(py*2)+","+Str(pz*2)))
                    cid = customBlocks()\vis
                  Else
-                   MessageRequester("","Cblock not found")
+                   MessageRequester("Error","Cblock not found: Aboring")
+                   Break 3
                  EndIf
                ElseIf(SBlocks(id)\type = #BLOCKTYPE_Torch)
                  If(FindMapElement(torches(),Str(mx)+","+Str(py*2)+","+Str(pz*2)))
                    cid = torches()\vis
                    Else
-                   MessageRequester("","Torchrot not found")
+                     MessageRequester("Error","Torchrot not found: Aboring")
+                     Break 3
                  EndIf
                Else
                  cid = 1
@@ -512,8 +531,8 @@ Procedure SaveModifiedChunk(cySchFile.s,x.f,z.f,y.f)
   EndIf
   ProcedureReturn 1
 EndProcedure
-; IDE Options = PureBasic 5.70 LTS (Windows - x64)
-; CursorPosition = 468
-; FirstLine = 454
+; IDE Options = PureBasic 5.72 (Windows - x64)
+; CursorPosition = 464
+; FirstLine = 430
 ; Folding = -
 ; EnableXP

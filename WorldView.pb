@@ -16,7 +16,8 @@
 #mode_insert = 2
 #mode_chunksel_nodel = 3
 
-#maxSchemX = 1024
+#maxSchemXZ = 600
+#maxSchemY = 300
 
 
 #BLOCKTYPE_VOID = 100
@@ -392,9 +393,9 @@ StatusBarProgress(0,1,0)
    LoadCustomBlocks(g_steamAppsDir+"common\cyubeVR\cyubeVR\Mods\Blocks\",g_noLocalMods)
    StatusBarText(0,0,"Custom Blocks loaded!")
    StatusBarProgress(0,1,0)
-   DisableMenuInteraction(#False)
+   
  CompilerEndIf
-
+DisableMenuInteraction(#False)
 CameraBackColor(0,RGB(100,100,255))
 MoveStart(@playerpos)
 
@@ -465,16 +466,36 @@ Repeat
     If(g_UpdateSchGeo)
       lastcID = -1
       lastID = -1
+      progressWindow = OpenWindow(#PB_Any,0,0,400,100,"Updating schematic preview...",#PB_Window_ScreenCentered)
+      progress = ProgressBarGadget(#PB_Any,10,10,380,15,0,100,#PB_ProgressBar_Smooth)
+      progressText = TextGadget(#PB_Any,10,30,380,50,"Adding blocks...")
+      While WindowEvent()
+      Wend
         g_UpdateSchGeo = 0
         If(IsStaticGeometry(schGeo.singleMesh\id))
           FreeStaticGeometry(schGeo\id)
         EndIf
+        done = 0
+        all = ListSize(SchBlocks())
         ResetList(SchBlocks())
         schGeo\id = CreateStaticGeometry(#PB_Any,10,10,10,#False)
         While(NextElement(SchBlocks()))
+          If done - lastdone >= 5000
+            prcnt = ((done)*100)/(all)
+            SetGadgetState(progress,prcnt)
+            SetGadgetText(progressText,"Building mesh..."+Str(prcnt)+"%")
+            WindowEvent()
+            lastdone = done
+          EndIf
           AddBlockToGeo(schGeo\id,schGeo\id,SchBlocks(),schBox\x1,schBox\y1,schBox\z1,0)
+          done + 1
+        Wend
+        SetGadgetState(progress,99)
+        SetGadgetText(progressText,"Finishing mesh please be patient CyubE3dit might hang for some time but no worries...")
+        While WindowEvent()
         Wend
         BuildStaticGeometry(schGeo\id)
+        CloseWindow(progressWindow)
       EndIf
 
   If(TryLockMutex(DelMutex))
@@ -501,6 +522,7 @@ Repeat
     mposY = DesktopMouseY()
     wmposX = WindowMouseX(0)
     wmposY = WindowMouseY(0)
+    CatchAction = #False
     If(wmposX > 0 And wmposY > 0)
       If IsWindow(#BSubstWind)
         If (mposX < WindowX(#BSubstWind) Or mposX > WindowX(#BSubstWind)+WindowWidth(#BSubstWind,#PB_Window_FrameCoordinate) Or mposy < WindowY(#BSubstWind) Or mposy > WindowY(#BSubstWind)+WindowHeight(#BSubstWind,#PB_Window_FrameCoordinate))
@@ -579,19 +601,19 @@ Repeat
           
           If KeyboardPushed(#PB_Key_LeftShift)
             If g_EditMode = #mode_cut Or g_EditMode = #mode_chunksel_nodel
-              If(GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleX)  - Abs(MoveToolZ)*grid*mDeltaSnapX >= grid And GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleX)  - Abs(MoveToolZ)*grid*mDeltaSnapX <= #maxSchemX*grid And GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleZ)  - Abs(MoveToolX)*grid*mDeltaSnapX >= grid And GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleZ)  - Abs(MoveToolX)*grid*mDeltaSnapX <= #maxSchemX*grid)
+              If(GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleX)  - Abs(MoveToolZ)*grid*mDeltaSnapX >= grid And GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleX)  - Abs(MoveToolZ) * grid * mDeltaSnapX <= #maxSchemXZ * grid And GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleZ)  - Abs(MoveToolX) * grid * mDeltaSnapX >= grid And GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleZ)  - Abs(MoveToolX) * grid * mDeltaSnapX <= #maxSchemXZ * grid)
                 ScaleToolBlock(GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleX) - Abs(MoveToolZ)*grid*mDeltaSnapX,GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleY),GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleZ) - Abs(MoveToolX)*grid*mDeltaSnapX,#PB_Absolute)
                 MoveNode(#ToolBlock,0.25 * MovetoolZ*grid*mDeltaSnapX,0,-0.25*MoveToolX*grid*mDeltaSnapX,#PB_Relative)
               EndIf
-              If(GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleY)-gridY*mDeltaSnapY >= gridY)
+              If(GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleY) - gridY * mDeltaSnapY >= gridY And GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleY) - gridY * mDeltaSnapY <= gridY * #maxSchemY And (GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleY) - gridY * mDeltaSnapY) / 4 + (NodeY(#ToolBlock) - 0.25*gridY*mDeltaSnapY) <= 800)
                 ScaleToolBlock(GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleX),GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleY)-1*gridY*mDeltaSnapY,GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleZ),#PB_Absolute)
                 MoveNode(#ToolBlock,0,-0.25*gridY*mDeltaSnapY,0,#PB_Relative)
               EndIf
             EndIf
           Else
-            MoveNode(#ToolBlock,0.5 * MoveToolZ*grid*mDeltaSnapX,0,-0.5 * MoveToolX*grid*mDeltaSnapX,#PB_Relative)
-            If(NodeY(#ToolBlock) - GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleY)/4 - 0.5*gridY*mDeltaSnapY >= 0 And NodeY(#ToolBlock) - GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleY)/4 - 0.5*gridY*mDeltaSnapY <= 800)
-              MoveNode(#ToolBlock,0,-0.5*gridY*mDeltaSnapY,0,#PB_Relative)
+            MoveNode(#ToolBlock,0.5 * MoveToolZ * grid * mDeltaSnapX,0,-0.5 * MoveToolX * grid * mDeltaSnapX,#PB_Relative)
+            If(NodeY(#ToolBlock) - 0.5 * gridY * mDeltaSnapY - GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleY)/4 >= 0 And NodeY(#ToolBlock) - 0.5 * gridY * mDeltaSnapY + GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleY)/4 <= 800)
+              MoveNode(#ToolBlock,0,-0.5 * gridY * mDeltaSnapY,0,#PB_Relative)
             EndIf
           EndIf
           mDeltaSnapX = 0
@@ -600,7 +622,7 @@ Repeat
         If(zoom)
           If KeyboardPushed(#PB_Key_LeftShift)
             If g_EditMode = #mode_cut Or g_EditMode = #mode_chunksel_nodel
-              If(GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleX) - MoveToolX*grid*zoom >= grid And GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleX) - MoveToolX*grid*zoom <= #maxSchemX*grid And GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleZ) + MoveToolZ*grid*zoom >= grid And GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleZ) + MoveToolZ*grid*zoom <= #maxSchemX*grid)
+              If(GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleX) - MoveToolX*grid*zoom >= grid And GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleX) - MoveToolX*grid*zoom <= #maxSchemXZ*grid And GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleZ) + MoveToolZ*grid*zoom >= grid And GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleZ) + MoveToolZ*grid*zoom <= #maxSchemXZ*grid)
                 ScaleToolBlock(GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleX) - MoveToolX*grid*zoom,GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleY),GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleZ) + MoveToolZ*grid*zoom,#PB_Absolute)
                 MoveNode(#ToolBlock,-0.25 *grid*zoom* MoveToolX,0,-0.25 *grid*zoom* MoveToolZ,#PB_Relative)
               EndIf
@@ -911,17 +933,14 @@ For i= 0 To #numthreads
     KillThread(thread(i))
   EndIf
 Next
-If IsScreenActive()
-  CloseScreen()
-EndIf
 
 CloseWindow(0)
 End
 
 
 ; IDE Options = PureBasic 5.72 (Windows - x64)
-; CursorPosition = 818
-; FirstLine = 802
+; CursorPosition = 468
+; FirstLine = 447
 ; Folding = -
 ; EnableXP
 ; Executable = test.exe
