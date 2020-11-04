@@ -301,18 +301,19 @@ Procedure ChangeSingleBlockID(id,cid,x.f,z.f,y.f)
   ;EndIf
 EndProcedure
 
-Procedure SaveModifiedChunk(cySchFile.s,x.f,z.f,y.f)
+Procedure SaveModifiedChunk(x.f,z.f,y.f, rotation)
   Shared DelMutex
+  cySchFile.s = g_SchematicFile
   file = OpenFile(#PB_Any,cySchFile,#PB_File_SharedRead)
   If file
-    progressWindow = OpenWindow(#PB_Any,0,0,400,200,"Injecting Cyube Schematic to World...",#PB_Window_ScreenCentered)
-    progress = ProgressBarGadget(#PB_Any,10,10,380,15,0,100,#PB_ProgressBar_Smooth)
-    progressText = TextGadget(#PB_Any,10,30,380,50,"Manipulating Chunks...")
-    StickyWindow(progressWindow, #True) 
+    OpenProgress(progH.pHnd,"World manipulation","Injecting the schematic into your world...")
+    schBox\sx = ReadLong(file)
+    schBox\sz = ReadLong(file)
+    schBox\sy = ReadLong(file)
+    sx = schBox\sx
+    sy = schBox\sz
+    sz = schBox\sy
     
-    sx = ReadLong(file)
-    sy = ReadLong(file)
-    sz = ReadLong(file)
     areasize = sx*sy*sz
     startX.f = x-(sx-1)/4  ;Get the edge coordinate instead of the center
     startY.f = y-(sy-1)/4
@@ -369,7 +370,16 @@ Procedure SaveModifiedChunk(cySchFile.s,x.f,z.f,y.f)
             memoffs+1
           Next
         EndIf
-
+      If rotation
+        UpdateProgress(progH,"Preparing data...",#PB_ProgressBar_Unknown)
+        RotateSchematic(customBlocks(),torches(),*destbuff,rotation)
+        sx = schBox\sx
+        sy = schBox\sz
+        sz = schBox\sy
+        startX.f = x-(sx-1)/4  ;Get the edge coordinate instead of the center
+        startY.f = y-(sy-1)/4
+        startZ.f = z-(sz-1)/4
+      EndIf
       NewMap affectedChunks.xy()
       thischunk.xy
       For blockx = 0 To sx
@@ -378,7 +388,7 @@ Procedure SaveModifiedChunk(cySchFile.s,x.f,z.f,y.f)
           cbx = cbx/2
           cby.f = blocky
           cby = cby/2
-          getChunk(@thischunnk,cbx+startX,cby+startY)
+          getChunk(@thischunk,cbx+startX,cby+startY)
           If(thischunk\vis = -1)
             MessageRequester("Error","The insertion overlaps at least one not yet generated chunk, only generated chunnks can be manipulated!")
             If(*destbuff)
@@ -461,9 +471,7 @@ Procedure SaveModifiedChunk(cySchFile.s,x.f,z.f,y.f)
               If(ElapsedMilliseconds()-lastU.q > 500)
                 lastU = ElapsedMilliseconds()
                 prcnt = ((done)*100)/areasize
-                SetGadgetState(progress,prcnt)
-                progressText = TextGadget(#PB_Any,10,30,380,50,"Saving cube..."+Str(prcnt)+"%")
-                WindowEvent()
+                UpdateProgress(progH,"Changing cubes..."+Str(prcnt)+"%",prcnt)
               EndIf
               pz = pz + 0.5
             Wend
@@ -527,12 +535,12 @@ Procedure SaveModifiedChunk(cySchFile.s,x.f,z.f,y.f)
 ;       EndIf
 ;       FreeMap(NeighbourChunks())
     CloseFile(file)
-    CloseWindow(progressWindow)
+    closeProgress(progH)
   EndIf
   ProcedureReturn 1
 EndProcedure
 ; IDE Options = PureBasic 5.72 (Windows - x64)
-; CursorPosition = 464
-; FirstLine = 430
+; CursorPosition = 379
+; FirstLine = 349
 ; Folding = -
 ; EnableXP

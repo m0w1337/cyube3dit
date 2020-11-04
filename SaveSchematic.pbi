@@ -243,7 +243,6 @@ Procedure SaveCyubeAreaToFile(x.f,z.f,y.f,sx,sz,sy)
       While py <= leY - startY
         pz.f= 0
         While pz <= endZ - startZ
-          
           mx = px*2
           my = py*2
           my = my * sx
@@ -359,7 +358,7 @@ Procedure SaveCyubeAreaToFile(x.f,z.f,y.f,sx,sz,sy)
 EndProcedure
 
 ; IDE Options = PureBasic 5.72 (Windows - x64)
-; CursorPosition = 250
-; FirstLine = 232
+; CursorPosition = 247
+; FirstLine = 217
 ; Folding = -
 ; EnableXP

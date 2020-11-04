@@ -10,19 +10,20 @@ Procedure CYSchematicGetSize(*size.box,filename.s)
   EndIf  
 EndProcedure
 
-Procedure.l displayCYSchematic(filename.s,List schBlocks.block(), rotation)
+Procedure displayCYSchematic(*prcnt.int)
+  rotation = g_schRotation
+  filename.s = g_SchematicFile
   Shared Mutex
   ret = 0
   file = OpenFile(#PB_Any,filename,#PB_File_SharedRead)
-  progressWindow = OpenWindow(#PB_Any,0,0,400,100,"Loading Cyube Schematic...",#PB_Window_ScreenCentered)
-  progress = ProgressBarGadget(#PB_Any,10,10,380,15,0,100,#PB_ProgressBar_Smooth)
-  progressText = TextGadget(#PB_Any,10,30,380,50,"Optimizing blocks...")
-  While WindowEvent()
-  Wend
+  
   If file
-    sx = ReadLong(file)
-    sy = ReadLong(file)
-    sz = ReadLong(file)
+    schBox\sx = ReadLong(file)
+    schBox\sz = ReadLong(file)
+    schBox\sy = ReadLong(file)
+    sx = schBox\sx
+    sy = schBox\sz
+    sz = schBox\sy
     FileSeek(file,Lof(file)-4)
     *destbuff = AllocateMemory(ReadLong(file))
     *srcbuff = AllocateMemory(Lof(file)-20)
@@ -44,7 +45,8 @@ Procedure.l displayCYSchematic(filename.s,List schBlocks.block(), rotation)
           FreeMemory(*srcbuff)
           CloseFile(file)
           CloseWindow(progressWindow)
-          ProcedureReturn 0
+          ClearList(schBlocks())
+          ProcedureReturn
         EndIf
         NewMap customBlocks.xy(16)
         If(numCblocks)
@@ -74,62 +76,18 @@ Procedure.l displayCYSchematic(filename.s,List schBlocks.block(), rotation)
             memoffs+1
           Next
         EndIf
-;         If rotation
-;           Dim dest(sx*sy)
-;           Dim rotRemap(4)
-;           rotRemap(0) = 3
-;           rotRemap(1) = 2
-;           rotRemap(2) = 0
-;           rotRemap(3) = 1
-;           NewMap customBlocksRot.xy()
-;           While rotation
-;             For z = 0 To sz-1
-;               dest_col = sy - 1 
-;               For h = 0 To sy - 1
-;                 For w = 0 To sx - 1
-;                   tmp = PeekB(*destbuff+z*sx*sy + h*sx + w)
-;                   dest(w * sy + dest_col) = tmp
-;                   If tmp = 66 Or SBlocks(tmp)\type = #BLOCKTYPE_Torch
-;                     If FindMapElement(customBlocks(),Str(w)+","+Str(h)+","+Str(z))
-;                       
-;                       If SBlocks(tmp)\type = #BLOCKTYPE_Torch And customBlocks()\vis < 4
-;                         customBlocksRot(Str(dest_col)+","+Str(w)+","+Str(z))\vis = rotRemap(customBlocks()\vis) ;Rotate torches
-;                       Else
-;                         customBlocksRot(Str(dest_col)+","+Str(w)+","+Str(z))\vis = customBlocks()\vis
-;                       EndIf
-;                       
-;                     EndIf
-;                   EndIf
-;                  Next
-;                  dest_col-1
-;                Next
-;                For h = 0 To sy - 1
-;                 For w = 0 To sx - 1
-;                     PokeB(*destbuff+z*sx*sy + h*sx + w, dest(h*sx + w))
-;                  Next
-;                Next
-;              Next z
-;              stmp = sx
-;              sx = sy
-;              sy = stmp
-;              ClearMap(customBlocks())
-;              ResetMap(customBlocksRot())
-;              While NextMapElement(customBlocksRot())
-;                customBlocks(MapKey(customBlocksRot()))\vis = customBlocksRot()\vis
-;              Wend
-;              ClearMap(customBlocksRot())
-;             rotation-1
-;           Wend
-;           FreeMap(customBlocksRot())
-;         EndIf
+        If rotation
+          *prcnt\i = #PB_ProgressBar_Unknown
+          RotateSchematic(customBlocks(),customBlocks(),*destbuff,rotation)
+          sx = schBox\sx
+          sy = schBox\sz
+          sz = schBox\sy
+        EndIf
         
         schemGeo = 100
         ClearList(schBlocks())
         For x=0 To sx-1
-          prcnt = ((x)*100)/(sx)
-            SetGadgetState(progress,prcnt)
-            SetGadgetText(progressText,"Optimizing mesh..."+Str(prcnt)+"%")
-            WindowEvent()
+          *prcnt\i = ((x)*100)/(sx)
           For y = 0 To sy-1
             memy = y*sx
             For z = 0 To sz-1
@@ -278,9 +236,6 @@ Procedure.l displayCYSchematic(filename.s,List schBlocks.block(), rotation)
             Next
           Next
         Next
-        SetGadgetState(progress,99)
-        SetGadgetText(progressText,"Sorting Blocktypes...")
-        WindowEvent()
         SortStructuredList(schBlocks(), #PB_Sort_Ascending, OffsetOf(Block\cblock), TypeOf(Block\cblock))
         SortStructuredList(schBlocks(), #PB_Sort_Ascending, OffsetOf(Block\id), TypeOf(Block\id))
         ResetList(schBlocks())
@@ -319,8 +274,12 @@ Procedure.l displayCYSchematic(filename.s,List schBlocks.block(), rotation)
   Else
     MessageRequester("Error","The selected file could not be read, sorry.")
   EndIf
-  CloseWindow(progressWindow)
-ProcedureReturn ret
+
+  If ret = 0
+    ClearList(schBlocks())
+  EndIf
+  
+ProcedureReturn
 EndProcedure
 
 
@@ -663,6 +622,7 @@ If(OpenFile(0,"D:\m0\INGb\projekte\cyubeVR\castledepoindestev-2"))
 EndProcedure
 
 ; IDE Options = PureBasic 5.72 (Windows - x64)
-; CursorPosition = 20
+; CursorPosition = 80
+; FirstLine = 36
 ; Folding = -
 ; EnableXP

@@ -145,6 +145,7 @@ Procedure HandleMenuEvents(evMenu)
           If(g_saveDir+g_LastWorld <> g_saveDir+worlds()) ; is it really worth the effort??
             SetMenuItemState(0,100+ListIndex(worlds()),#True)
             g_ChunkLoadingPaused = #True
+            Delay(200)
             StopChunkloading()
             g_LastWorld = worlds()
             ;LockMutex(Mutex)
@@ -165,12 +166,12 @@ Procedure HandleMenuEvents(evMenu)
     Else
       Select evMenu
         Case #menu_load:
-          SchematicFile = OpenFileRequester("Choose a schematic file","","Schematic Files (*.CySch, *.gz)|*.CySch;*.gz|All files (*.*)|*.*",0)
-          If SchematicFile
+          g_SchematicFile = OpenFileRequester("Choose a schematic file","","Schematic Files (*.CySch, *.gz)|*.CySch;*.gz|All files (*.*)|*.*",0)
+          If g_SchematicFile
             g_EditMode = #mode_insert
-            CYSchematicGetSize(@schBox,SchematicFile)
+            CYSchematicGetSize(@schBox,g_SchematicFile)
             HideToolBlock(#False)
-            ScaleToolBlock(schBox\sx+0.01,schBox\sy+0.01,schBox\sz+0.01,#PB_Absolute)
+            ScaleToolBlock(0.03,0.03,0.03,#PB_Absolute)
             MoveNode(#ToolBlock,Round(CameraX(0),#PB_Round_Up),Round(CameraY(0),#PB_Round_Up),Round(CameraZ(0),#PB_Round_Up),#PB_Absolute)
             MoveNode(#ToolBlock,CameraDirectionX(0)*(schBox\sx),CameraDirectionY(0)*schBox\sy/3,CameraDirectionZ(0)*(schBox\sz),#PB_Relative)
             MoveNode(#ToolBlock,Round(NodeX(#ToolBlock),#PB_Round_Up)-(schBox\sx-1)*0.25,Round(NodeY(#ToolBlock),#PB_Round_Up)-(schBox\sy-1)*0.25,Round(NodeZ(#ToolBlock),#PB_Round_Up)-(schBox\sz-1)*0.25,#PB_Absolute)
@@ -178,7 +179,31 @@ Procedure HandleMenuEvents(evMenu)
             schBox\x1 = NodeX(#ToolBlock) - (schBox\sx-1)/4
             schBox\y1 = NodeY(#ToolBlock) - (schBox\sy-1)/4
             schBox\z1 = NodeZ(#ToolBlock) - (schBox\sz-1)/4
-            g_UpdateSchGeo = displayCYSchematic(SchematicFile, SchBlocks(),0)
+            If schBox\y1 < 0  ;Make sure the inserted schematic is spawned within Y boundaries!!!
+              MoveNode(#ToolBlock,0,-schBox\y1+4,0,#PB_Relative)
+            ElseIf schBox\y1 + schBox\sy / 2 > 800
+              MoveNode(#ToolBlock,0,796 - (schBox\y1 + schBox\sy / 2),0,#PB_Relative)
+            EndIf
+            schBox\x1 = NodeX(#ToolBlock) - (schBox\sx-1)/4
+            schBox\y1 = NodeY(#ToolBlock) - (schBox\sy-1)/4
+            schBox\z1 = NodeZ(#ToolBlock) - (schBox\sz-1)/4
+            g_schRotation = 0
+            OpenProgress(progH.phnd, "Loading Cyube Schematic...", "Optimizing blocks...")
+            prog.int
+            schThread = CreateThread(@displayCYSchematic(),@prog)
+            While IsThread(schThread)
+              progress = prog\i
+              UpdateProgress(progH,"Optimizing mesh..."+Str(progress)+"%",progress)
+              ScaleToolBlock((schBox\sx+0.03) * progress / 100,(schBox\sy+0.03) * progress / 100,(schBox\sz+0.03) * progress / 100,#PB_Absolute)
+              RenderWorld()
+              FlipBuffers()
+            Wend
+            ScaleToolBlock(schBox\sx+0.03,schBox\sy+0.03,schBox\sz+0.03,#PB_Absolute)
+            CloseProgress(progH)
+            If ListSize(SchBlocks())
+              g_UpdateSchGeo = 1
+            EndIf
+            
             If(g_UpdateSchGeo)
               WorldShadows(#PB_Shadow_None)
             Else
@@ -440,7 +465,7 @@ Procedure HandleMenuEvents(evMenu)
   EndProcedure
   
 ; IDE Options = PureBasic 5.72 (Windows - x64)
-; CursorPosition = 75
-; FirstLine = 53
+; CursorPosition = 214
+; FirstLine = 187
 ; Folding = -
 ; EnableXP

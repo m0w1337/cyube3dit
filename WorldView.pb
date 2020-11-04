@@ -8,7 +8,7 @@
 ; ------------------------------------------------------------
 ;
 
-#VERSION = "1.0.9."+#PB_Editor_BuildCount
+#VERSION = "1.1.0."+#PB_Editor_BuildCount
 
 #mode_init = -1
 #mode_normal = 0
@@ -138,6 +138,9 @@ Structure chunk
   Structure singleMesh
     id.q
   EndStructure
+  Structure int
+    i.i
+  EndStructure
   
   Structure pos
     x.f
@@ -165,7 +168,8 @@ Global schBox.box
 Global NewList SchBlocks.block()
 Global currentchunk.xy  
 Global NewList Markers.marker()
-Global SchematicFile.s
+Global g_SchematicFile.s
+Global g_schRotation
 Global g_UpdateSchGeo
 Global schGeo.singleMesh
 Global g_CBlockDB
@@ -466,9 +470,7 @@ Repeat
     If(g_UpdateSchGeo)
       lastcID = -1
       lastID = -1
-      progressWindow = OpenWindow(#PB_Any,0,0,400,100,"Updating schematic preview...",#PB_Window_ScreenCentered)
-      progress = ProgressBarGadget(#PB_Any,10,10,380,15,0,100,#PB_ProgressBar_Smooth)
-      progressText = TextGadget(#PB_Any,10,30,380,50,"Adding blocks...")
+      OpenProgress(progH.pHnd,"Drawing schematic","Building mesh...")
       While WindowEvent()
       Wend
         g_UpdateSchGeo = 0
@@ -480,22 +482,20 @@ Repeat
         ResetList(SchBlocks())
         schGeo\id = CreateStaticGeometry(#PB_Any,10,10,10,#False)
         While(NextElement(SchBlocks()))
-          If done - lastdone >= 5000
-            prcnt = ((done)*100)/(all)
-            SetGadgetState(progress,prcnt)
-            SetGadgetText(progressText,"Building mesh..."+Str(prcnt)+"%")
-            WindowEvent()
-            lastdone = done
+          lastdone + 1
+          If lastdone = 10000
+            prcnt = ((done)*99)/(all)
+            UpdateProgress(progH,"Building mesh..."+Str(prcnt)+"%",prcnt)
+            lastdone = 0
           EndIf
           AddBlockToGeo(schGeo\id,schGeo\id,SchBlocks(),schBox\x1,schBox\y1,schBox\z1,0)
           done + 1
         Wend
-        SetGadgetState(progress,99)
-        SetGadgetText(progressText,"Finishing mesh please be patient CyubE3dit might hang for some time but no worries...")
+        UpdateProgress(progH,"Building mesh..."+Str(99)+"%",99)
         While WindowEvent()
         Wend
         BuildStaticGeometry(schGeo\id)
-        CloseWindow(progressWindow)
+        closeProgress(progH)
       EndIf
 
   If(TryLockMutex(DelMutex))
@@ -718,13 +718,14 @@ Repeat
       ElseIf(g_EditMode = #mode_insert And KeyboardPushed(#PB_Key_LeftControl))
         KeyY = 0
         AccY = 0
-        SaveModifiedChunk(SchematicFile,schBox\x1 + (schBox\sx-1)/4, schBox\y1 + (schBox\sy-1)/4, schBox\z1 + (schBox\sz-1)/4)
+        SaveModifiedChunk(schBox\x1 + (schBox\sx-1)/4, schBox\y1 + (schBox\sy-1)/4, schBox\z1 + (schBox\sz-1)/4, g_schRotation)
         g_EditMode = #mode_normal
         HideToolBlock(#True)
         If IsStaticGeometry(schGeo\id)
           WorldShadows(g_Shadows)
           FreeStaticGeometry(schGeo\id)
         EndIf
+        ClearList(SchBlocks())
       Else
         KeyY = #CameraSpeedSlow * movedelta  * AccY
       EndIf
@@ -792,8 +793,58 @@ Repeat
        schBox\x1 = NodeX(#ToolBlock) - (schBox\sx-1)/4
        schBox\y1 = NodeY(#ToolBlock) - (schBox\sy-1)/4
        schBox\z1 = NodeZ(#ToolBlock) - (schBox\sz-1)/4
-       g_UpdateSchGeo = 1 ;displayCYSchematic(SchematicFile, SchBlocks())
-     EndIf 
+       g_UpdateSchGeo = 1 ;displayCYSchematic(g_SchematicFile, SchBlocks())
+     ElseIf KeyboardReleased(#PB_Key_Z)
+       RotSchem = 1
+     ElseIf KeyboardReleased(#PB_Key_X)
+       RotSchem = -1
+     EndIf
+     If RotSchem
+       If RotSchem < 0
+         g_schRotation + 1
+         rotstep = -4
+         i = 0
+         While g_schRotation >= 4
+           g_schRotation - 4
+         Wend
+       Else
+         rotstep = 4
+         i = 0
+         g_schRotation - 1
+        While g_schRotation < 0
+           g_schRotation + 4
+         Wend
+       EndIf
+       RotSchem = 0
+        OpenProgress(progH.phnd, "Rotating Cyube Schematic...", "Re-organizing blocks...")
+        prog.int
+        schThread = CreateThread(@displayCYSchematic(),@prog)
+        While i >= -90 And i <= 90
+          i+rotstep
+          progress = prog\i
+          UpdateProgress(progH,"Rotating mesh..."+Str(progress)+"%",progress)
+          RotateNode(#ToolBlock,0,90*i/100,0)
+          RenderWorld()
+          FlipBuffers()
+          Delay(20)
+        Wend
+        While IsThread(schThread)
+          progress = prog\i
+          UpdateProgress(progH,"Optimizing mesh..."+Str(progress)+"%",progress)
+          RenderWorld()
+          FlipBuffers()
+          Delay(20)
+        Wend
+        RotateNode(#ToolBlock,0,0,0)
+        ScaleToolBlock(schBox\sx+0.03,schBox\sy+0.03,schBox\sz+0.03,#PB_Absolute)
+        CloseProgress(progH)
+       g_UpdateSchGeo = 1
+       ScaleToolBlock(schBox\sx+0.03,schBox\sy+0.03,schBox\sz+0.03,#PB_Absolute)
+       schBox\x1 = NodeX(#ToolBlock) - (schBox\sx-1)/4
+       schBox\y1 = NodeY(#ToolBlock) - (schBox\sy-1)/4
+       schBox\z1 = NodeZ(#ToolBlock) - (schBox\sz-1)/4
+     EndIf
+     
    ElseIf g_EditMode = #mode_chunksel_nodel
      If KeyboardReleased(#PB_Key_Return)
        AddElement(Markers())
@@ -819,7 +870,7 @@ Repeat
           WorldShadows(g_Shadows)
           FreeStaticGeometry(schGeo\id)
         EndIf
-        
+        ClearList(SchBlocks())
       EndIf
     ElseIf KeyboardReleased(#PB_Key_P)
       If(g_ChunkLoadingPaused)
@@ -939,8 +990,7 @@ End
 
 
 ; IDE Options = PureBasic 5.72 (Windows - x64)
-; CursorPosition = 468
-; FirstLine = 447
+; CursorPosition = 25
 ; Folding = -
 ; EnableXP
 ; Executable = test.exe

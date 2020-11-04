@@ -91,7 +91,7 @@ Macro AddBlockToGeo(GeoID,BBGeoID,SchBlocks,startx,starty,startz, showBorders)
       If(lastcID <> cID)
         lastcID = cID
         If Not FindMapElement(CBlocks(),Str(cID))
-          addCustomBlock(cID)
+          addCustomBlock(cID,0)
         EndIf
         BMode = CBlocks()\mode
         Select BMode
@@ -328,13 +328,8 @@ Procedure drawChunk(meshnum,threadnum,x,y,resetMaterial)
   EndIf
    
   start.q = ElapsedMilliseconds()
-  While (ElapsedMilliseconds() - start) < 100;25
-    If IsStaticGeometry(currGeoID) And IsStaticGeometry(currBBGeoID)
-      GeoStillPresent = 1
-    Else
-      GeoStillPresent = 0
-    EndIf
-    
+  While (ElapsedMilliseconds() - start) < 25
+       
     If(lastpart(threadnum) = 12)
       If IsStaticGeometry(currBBGeoID)
         BuildStaticGeometry(currBBGeoID)
@@ -356,14 +351,25 @@ Procedure drawChunk(meshnum,threadnum,x,y,resetMaterial)
         Else
           lastpart(threadnum) = 12
         EndIf
-      ElseIf (NextElement(g_chunkArray(threadnum, lastpart(threadnum))\chunkmesh()) And GeoStillPresent)
-        AddBlockToGeo(currGeoID,currBBGeoID,g_chunkArray(threadnum, lastpart(threadnum))\chunkmesh(),x,0,y,g_chunkborders)
-        ;added = 1
+       ElseIf NextElement(g_chunkArray(threadnum, lastpart(threadnum))\chunkmesh()) ; And GeoStillPresent)
+         If IsStaticGeometry(currGeoID) And IsStaticGeometry(currBBGeoID)
+            AddBlockToGeo(currGeoID,currBBGeoID,g_chunkArray(threadnum, lastpart(threadnum))\chunkmesh(),x,0,y,g_chunkborders)
+          Else
+            g_drawing(threadnum) = 3
+            lastpart(threadnum) = -1
+            If(IsStaticGeometry(currGeoID))
+              FreeStaticGeometry(currGeoID)
+            ElseIf IsStaticGeometry(currBBGeoID)
+              FreeStaticGeometry(currGeoID)
+            EndIf
+            ProcedureReturn 1
+          EndIf
+        added = 1
         
-      ElseIf(Not GeoStillPresent)  ;stop drawing this chunk as soon as the drawing was interrupted from a delete, because it shouldn't be visible in this case
-        g_drawing(threadnum) = 3
-        lastpart(threadnum) = -1
-        ProcedureReturn 1
+;       ElseIf(Not GeoStillPresent)  ;stop drawing this chunk as soon as the drawing was interrupted from a delete, because it shouldn't be visible in this case
+;         g_drawing(threadnum) = 3
+;         lastpart(threadnum) = -1
+;         ProcedureReturn 1
       ElseIf(added = 0)
         BuildStaticGeometry(currGeoID)
         g_drawing(threadnum) = 1
@@ -1031,7 +1037,7 @@ Procedure RebuildWorld()
   UnlockMutex(DelMutex)
 EndProcedure
 ; IDE Options = PureBasic 5.72 (Windows - x64)
-; CursorPosition = 973
-; FirstLine = 925
+; CursorPosition = 93
+; FirstLine = 72
 ; Folding = --
 ; EnableXP

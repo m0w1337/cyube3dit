@@ -28,6 +28,13 @@
 #Marker_green = 1010
 #Marker_red = 1011
 
+Structure pHnd
+  wind.i
+  progbar.i
+  progtxt.i
+EndStructure
+
+
 Global BlockListIconIL = 0
 
 Declare  publishCustomBlock(db, id, mode, name.s, author.s)
@@ -962,9 +969,96 @@ Procedure AddBlockToList(text.s,id,cid)
   Next
 EndProcedure
 
+Procedure RotateSchematic(Map customBlocks.xy(), Map torches.xy(), *destbuff, rotation)
+
+  Dim dest(schBox\sx*schBox\sz)
+  Dim rotRemap(6)
+  rotRemap(0) = 3
+  rotRemap(1) = 2
+  rotRemap(2) = 0
+  rotRemap(3) = 1
+  rotRemap(4) = 4
+  rotRemap(5) = 5
+  NewMap customBlocksRot.xy()
+  NewMap torchesRot.xy()
+  While rotation
+    sx = schBox\sx
+    sy = schBox\sz
+    sz = schBox\sy
+    For z = 0 To sz-1
+      dest_col = sy - 1 
+      For h = 0 To sy - 1
+        For w = 0 To sx - 1
+          tmp = PeekB(*destbuff+z*sx*sy + h*sx + w)
+          dest(w * sy + dest_col) = tmp
+          If tmp = 66
+            If FindMapElement(customBlocks(),Str(w)+","+Str(h)+","+Str(z))
+              customBlocksRot(Str(dest_col)+","+Str(w)+","+Str(z))\vis = customBlocks()\vis
+            EndIf
+          ElseIf SBlocks(tmp)\type = #BLOCKTYPE_Torch
+            If FindMapElement(torches(),Str(w)+","+Str(h)+","+Str(z))
+              torchesRot(Str(dest_col)+","+Str(w)+","+Str(z))\vis = rotRemap(torches()\vis) ;Rotate torches
+            EndIf
+          EndIf
+         Next
+         dest_col-1
+       Next
+       For h = 0 To sy - 1
+        For w = 0 To sx - 1
+            PokeB(*destbuff+z*sx*sy + h*sx + w, dest(h*sx + w))
+         Next
+       Next
+     Next z
+     schBox\sx = sy
+     schBox\sz = sx
+     schBox\sy = sz
+     
+     ClearMap(customBlocks())
+     ClearMap(torches())
+     
+     ResetMap(customBlocksRot())
+     While NextMapElement(customBlocksRot())
+       customBlocks(MapKey(customBlocksRot()))\vis = customBlocksRot()\vis
+     Wend
+
+     ResetMap(torchesRot())
+     While NextMapElement(torchesRot())
+       torches(MapKey(torchesRot()))\vis = torchesRot()\vis
+     Wend
+    rotation-1
+  Wend
+  FreeMap(customBlocksRot())
+  FreeMap(torchesRot())
+EndProcedure
+
+Procedure OpenProgress(*ret.pHnd, windowTitle.s, initText.s)
+  *ret\wind = OpenWindow(#PB_Any,0,0,400,100,windowTitle,#PB_Window_ScreenCentered|#PB_Window_Tool,WindowID(0))
+  StickyWindow(*ret\wind ,#True)
+  *ret\progbar = ProgressBarGadget(#PB_Any,10,10,380,15,0,100,#PB_ProgressBar_Smooth)
+  *ret\progtxt = TextGadget(#PB_Any,10,30,380,50,initText)
+  While WindowEvent()
+  Wend
+EndProcedure
+
+
+Procedure closeProgress(*progHnd.pHnd)
+  CloseWindow(*progHnd\wind)
+EndProcedure
+
+Procedure UpdateProgress(*progH.pHnd, text.s, value)
+  SetGadgetText(*progH\progtxt,text)
+  SetGadgetState(*progH\progbar, value)
+  WindowEvent()
+EndProcedure
+
+
+
+
+
+
   
 ; IDE Options = PureBasic 5.72 (Windows - x64)
-; CursorPosition = 928
-; FirstLine = 915
-; Folding = ----
+; CursorPosition = 976
+; FirstLine = 959
+; Folding = -----
 ; EnableXP

@@ -73,7 +73,6 @@ Procedure remoteLoadCustomBlock(db,id, *ret.CBlocks)
   ret = 0
   If db
     DatabaseQuery(db, "SELECT id,name,author,type,preview from CustomBlocks WHERE id = "+Str(id)+";")
-    WindowEvent()
     If NextDatabaseRow(db)
       *ret\id = id
       *ret\mode = GetDatabaseLong(db,3)
@@ -93,21 +92,25 @@ Procedure remoteLoadCustomBlock(db,id, *ret.CBlocks)
   ProcedureReturn ret
 EndProcedure
 
-Procedure addCustomBlock(cID)
+Procedure addCustomBlock(cID,async=1)
   CBlocks(Str(cID))\id = cID
   CBlocks()\mode = 1
   CBlocks()\name = "the unknown custom Block"
   CBlocks()\tex(0) = CreateTexture(#PB_Any,256,256)
   If g_CBlockDB
-    StatusBarText(0,0,"Gathering information about a not installed custom block, please stand by...")
-    While(WindowEvent())
-    Wend
+    If Not async
+      StatusBarText(0,0,"Gathering information about a not installed custom block, please stand by...")
+      UpdateWindow_(StatusBarID(0))
+    EndIf
     loadedCBlock.CBlocks
     If remoteLoadCustomBlock(g_CBlockDB,cID, @loadedCBlock)
       CBlocks()\name = loadedCBlock\name
       CBlocks()\prev = loadedCBlock\prev
     EndIf
-    StatusBarText(0,0,"Running...")
+    If Not async
+      StatusBarText(0,0,"Running...")
+    EndIf
+    
   EndIf
   StartDrawing(TextureOutput(CBlocks()\tex(0)))
   DrawingMode(#PB_2DDrawing_Transparent)
@@ -125,6 +128,7 @@ Procedure addCustomBlock(cID)
   CBlocks()\tex(0) = CreateMaterial(#PB_Any,TextureID(CBlocks()\tex(0)))
 EndProcedure
 ; IDE Options = PureBasic 5.72 (Windows - x64)
-; CursorPosition = 12
+; CursorPosition = 102
+; FirstLine = 66
 ; Folding = --
 ; EnableXP
