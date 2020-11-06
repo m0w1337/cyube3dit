@@ -143,21 +143,16 @@ Procedure HandleMenuEvents(evMenu)
       While(NextElement(worlds()))
         If(evMenu = 100+ListIndex(worlds()))
           If(g_saveDir+g_LastWorld <> g_saveDir+worlds()) ; is it really worth the effort??
+            StopEditing()
             SetMenuItemState(0,100+ListIndex(worlds()),#True)
-            g_ChunkLoadingPaused = #True
-            Delay(200)
             StopChunkloading()
             g_LastWorld = worlds()
-            ;LockMutex(Mutex)
             ClearMap(chunks())
             If(Not GetChunkList(g_saveDir+g_LastWorld+"/", @playerpos.pos))
               MessageRequester("Something is wrong","This world doesn't seem to have enough chunks to be worth loading... (<10)")
             EndIf
             RebuildWorld()
-            ;UnlockMutex(Mutex)
             MoveStart(@playerpos)
-            StartChunkloading()
-            g_ChunkLoadingPaused = #False
           EndIf
         Else
           SetMenuItemState(0,100+ListIndex(worlds()),#False)
@@ -192,7 +187,9 @@ Procedure HandleMenuEvents(evMenu)
             prog.int
             schThread = CreateThread(@displayCYSchematic(),@prog)
             While IsThread(schThread)
+              LockMutex(ProgMutex)
               progress = prog\i
+              UnlockMutex(ProgMutex)
               UpdateProgress(progH,"Optimizing mesh..."+Str(progress)+"%",progress)
               ScaleToolBlock((schBox\sx+0.03) * progress / 100,(schBox\sy+0.03) * progress / 100,(schBox\sz+0.03) * progress / 100,#PB_Absolute)
               RenderWorld()
@@ -240,11 +237,7 @@ Procedure HandleMenuEvents(evMenu)
             g_chunkborders = 1
           EndIf
           SetMenuItemState(0, #menu_chunkBorders, g_chunkborders)
-          ;StopChunkloading()
-          g_ChunkLoadingPaused = #True
           RebuildWorld()
-          g_ChunkLoadingPaused = #False
-          ;StartChunkloading()
         Case #menu_setPPos:
           If MessageRequester("Info","This will update the in game player position to the current camera position. Please make sure you dont bake yourself in solid Rock."+Chr(10)+Chr(13)+"Do it?",#PB_MessageRequester_YesNo) = #PB_MessageRequester_Yes
             WritePlayerPos(g_saveDir+g_LastWorld+"/",CameraX(0),CameraY(0),CameraZ(0))
@@ -281,42 +274,26 @@ Procedure HandleMenuEvents(evMenu)
           SetMaterialCulling()
           SetMenuItemState(0, #menu_noCulling, g_DoubleDraw)
           If(g_Shadows  <> #PB_Shadow_None)
-            ;StopChunkloading()
-            g_ChunkLoadingPaused = #True
             RebuildWorld()
-            g_ChunkLoadingPaused = #False
-            ;StartChunkloading()
           EndIf
         Case #menu_shadows_none:
           g_shadows = #PB_Shadow_None
           WorldShadows(g_shadows,0,0,0)
-          ;StopChunkloading()
-          g_ChunkLoadingPaused = #True
           RebuildWorld()
-          g_ChunkLoadingPaused = #False
-          ;StartChunkloading()
           SetMenuItemState(0,#menu_shadows_none,1)
           SetMenuItemState(0,#menu_shadows_simple,0)
           SetMenuItemState(0,#menu_shadows_adv,0)
         Case #menu_shadows_simple:
           g_shadows = #PB_Shadow_Modulative
           WorldShadows(g_shadows,30,RGB(150,150,170))
-          ;StopChunkloading()
-          g_ChunkLoadingPaused = #True
           RebuildWorld()
-          g_ChunkLoadingPaused = #False
-          ;StartChunkloading()
           SetMenuItemState(0,#menu_shadows_none,0)
           SetMenuItemState(0,#menu_shadows_simple,1)
           SetMenuItemState(0,#menu_shadows_adv,0)
         Case #menu_shadows_adv:
           g_shadows = #PB_Shadow_Additive
           WorldShadows(g_Shadows,25,RGB(10,10,30),256)
-          ;StopChunkloading()
-          g_ChunkLoadingPaused = #True
           RebuildWorld()
-          g_ChunkLoadingPaused = #False
-          ;StartChunkloading()
           SetMenuItemState(0,#menu_shadows_none,0)
           SetMenuItemState(0,#menu_shadows_simple,0)
           SetMenuItemState(0,#menu_shadows_adv,1)
@@ -417,9 +394,7 @@ Procedure HandleMenuEvents(evMenu)
                   CloseDatabase(db)
                 EndIf
               EndIf
-              g_ChunkLoadingPaused = #True
               RebuildWorld()
-              g_ChunkLoadingPaused = #False
               DeleteFile(g_instaLoadDir+g_LastWorld+"/"+"chunkmeshes.sqlite")
             Else
               MessageRequester("Not possible","Please select at least one chunk to keep, to delete the whole world you don't need this tool.")
@@ -465,7 +440,6 @@ Procedure HandleMenuEvents(evMenu)
   EndProcedure
   
 ; IDE Options = PureBasic 5.72 (Windows - x64)
-; CursorPosition = 214
-; FirstLine = 187
+; CursorPosition = 190
 ; Folding = -
 ; EnableXP

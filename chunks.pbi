@@ -371,7 +371,16 @@ Procedure drawChunk(meshnum,threadnum,x,y,resetMaterial)
 ;         lastpart(threadnum) = -1
 ;         ProcedureReturn 1
       ElseIf(added = 0)
-        BuildStaticGeometry(currGeoID)
+        If IsStaticGeometry(currGeoID)
+          BuildStaticGeometry(currGeoID)
+        Else
+          If IsStaticGeometry(currBBGeoID)
+            FreeStaticGeometry(currBBGeoID)
+          EndIf
+          g_drawing(threadnum) = 0
+          lastpart(threadnum) = -1
+          ProcedureReturn 1
+        EndIf
         g_drawing(threadnum) = 1
         currGeoID = 0
         ProcedureReturn 0
@@ -453,7 +462,7 @@ If lib
       UnlockMutex(DelMutex)
       If(loadNew = 1)
         g_prepareID(threadnum) = ChunkID
-        UnlockMutex(Mutex)
+        LockMutex(Mutex)
         If(FindMapElement(chunks(), Str(xCoord-16)+","+Str(yCoord)))
           ChunkLID = chunks()\id
         Else
@@ -921,8 +930,7 @@ If lib
               Next
             Next
           Next
-          While(Not TryLockMutex(Mutex) And Not g_exit)
-          Wend
+          LockMutex(Mutex)
           If Not g_exit
             For i = 0 To 11
               SortStructuredList(g_chunkArray(threadnum,i)\chunkmesh(), #PB_Sort_Ascending, OffsetOf(Block\cblock), TypeOf(Block\cblock))
@@ -930,8 +938,8 @@ If lib
               ResetList(g_chunkArray(threadnum,i)\chunkmesh())
             Next
             g_chunk0ToRender(threadnum) = 1
-            UnlockMutex(Mutex)
           EndIf
+          UnlockMutex(Mutex)
           FreeMemory(*destbuff)
           FreeMemory(*destbuffL)
           FreeMemory(*destbuffR)
@@ -943,7 +951,9 @@ If lib
         EndIf
     EndIf
   Until g_exit
+  LockMutex(Mutex)
   g_chunk0ToRender(threadnum) = 0
+  UnlockMutex(Mutex)
   CloseLibrary(lib)
   If(db)
     CloseDatabase(db)
@@ -955,8 +965,6 @@ EndProcedure
 
 Procedure farchunks(unused)
   Shared DelMutex
-  Shared Mutex
-  Shared DrawMutex
   Repeat
     If g_ChunkLoadingPaused = #False
       If TryLockMutex(DelMutex)
@@ -1021,6 +1029,7 @@ Procedure StartChunkloading()
 EndProcedure
 
 Procedure RebuildWorld()
+  StopChunkloading()
   LockMutex(DelMutex)
   ResetMap(visibleChunks())
   While NextMapElement(visibleChunks())
@@ -1035,9 +1044,11 @@ Procedure RebuildWorld()
     Next
   FreeStaticGeometry(#PB_All) 
   UnlockMutex(DelMutex)
+  StartChunkloading()
+  g_ChunkLoadingPaused = #False
 EndProcedure
 ; IDE Options = PureBasic 5.72 (Windows - x64)
-; CursorPosition = 93
-; FirstLine = 72
+; CursorPosition = 1047
+; FirstLine = 997
 ; Folding = --
 ; EnableXP

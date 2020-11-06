@@ -1,0 +1,49 @@
+abstract material POM
+{
+	technique
+	{   
+		pass
+		{
+			vertex_program_ref POM_Vert_hlsl
+			{
+				param_named scale float $scale
+				param_named fHeightMapScale float $depth   
+			}
+
+			fragment_program_ref POM_Frag_hlsl
+			{   
+				param_named spec_exponent float $specular_exponent
+				param_named spec_factor float $specular_factor   
+			}
+
+			texture_unit
+			{
+				texture_alias texture2
+				tex_coord_set  0
+			}
+			texture_unit 
+			{
+				texture_alias texture1
+				tex_coord_set  0
+			}         
+		}      
+	}
+	technique
+	{   
+		pass
+		{
+			texture_unit
+			{
+				texture        $diffuse_map
+			}      
+		}      
+	}
+}
+
+material ParallaxOcclusionMapping : POM
+{
+	set $scale 1
+	set $depth 0.1
+	set $specular_exponent 128
+	set $specular_factor 0.6
+}

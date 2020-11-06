@@ -11,6 +11,7 @@ Procedure CYSchematicGetSize(*size.box,filename.s)
 EndProcedure
 
 Procedure displayCYSchematic(*prcnt.int)
+  Shared ProgMutex
   rotation = g_schRotation
   filename.s = g_SchematicFile
   Shared Mutex
@@ -77,7 +78,9 @@ Procedure displayCYSchematic(*prcnt.int)
           Next
         EndIf
         If rotation
+          LockMutex(ProgMutex)
           *prcnt\i = #PB_ProgressBar_Unknown
+          UnlockMutex(ProgMutex)
           RotateSchematic(customBlocks(),customBlocks(),*destbuff,rotation)
           sx = schBox\sx
           sy = schBox\sz
@@ -87,7 +90,9 @@ Procedure displayCYSchematic(*prcnt.int)
         schemGeo = 100
         ClearList(schBlocks())
         For x=0 To sx-1
+          LockMutex(ProgMutex)
           *prcnt\i = ((x)*100)/(sx)
+          UnlockMutex(ProgMutex)
           For y = 0 To sy-1
             memy = y*sx
             For z = 0 To sz-1
@@ -622,7 +627,6 @@ If(OpenFile(0,"D:\m0\INGb\projekte\cyubeVR\castledepoindestev-2"))
 EndProcedure
 
 ; IDE Options = PureBasic 5.72 (Windows - x64)
-; CursorPosition = 80
-; FirstLine = 36
+; CursorPosition = 13
 ; Folding = -
 ; EnableXP

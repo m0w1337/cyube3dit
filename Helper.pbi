@@ -599,7 +599,15 @@ Procedure SaveBlockPreview(BlockID, CBlockID, noUpload,CBauthor.s)
   
 EndProcedure
 
-
+;>>>>>>>>>>>>>>>>>>>> BUG GetScriptMaterial <<<<<<<<<<<<<<<<<<<<
+Procedure.i GetScriptMaterial_(material.i,name.s)
+  Protected m,mtemp=GetScriptMaterial(-1,name)
+  m=CopyMaterial(mtemp,material)
+  If material=-1:material=m:EndIf
+  FreeMaterial(mtemp)
+  ProcedureReturn material
+EndProcedure
+Macro GetScriptMaterial(material,name):GetScriptMaterial_(material,name):EndMacro
 
 Procedure LoadBlocks(Array blockArr.SBlocks(1), Map ABlockMap.SBlocks())
   StatusBarText(0,0,"Loading Blocks, please wait...")
@@ -638,16 +646,26 @@ Procedure LoadBlocks(Array blockArr.SBlocks(1), Map ABlockMap.SBlocks())
                 If date > lastDate
                   lastDate = date
                 EndIf
-                currBlock\tex(0) = LoadTexture(#PB_Any,XMLAttributeValue(*ChildNode))
+                If GetExtensionPart(XMLAttributeValue(*ChildNode)) = "material"
+                   currBlock\tex(0) = GetScriptMaterial(#PB_Any,GetFilePart(XMLAttributeValue(*ChildNode),#PB_FileSystem_NoExtension))
+                Else
+                  currBlock\tex(0) = LoadTexture(#PB_Any,XMLAttributeValue(*ChildNode))
+                  If currBlock\tex(0)
+                    currBlock\tex(0) = CreateMaterial(#PB_Any,TextureID(currBlock\tex(0)))
+                    MaterialCullingMode(currBlock\tex(0),#PB_Material_NoCulling)
+                  EndIf
+                EndIf
+                
                 If currBlock\tex(0) = 0
                   currBlock\tex(0) = CreateTexture(#PB_Any,128,128)
                   StartDrawing(TextureOutput(currBlock\tex(0)))
                   DrawingMode(#PB_2DDrawing_AlphaBlend)
                   DrawTextEx(1,1,"Texture missing:"+#CRLF$+XMLAttributeValue(*ChildNode))
                   StopDrawing()
+                  currBlock\tex(0) = CreateMaterial(#PB_Any,TextureID(currBlock\tex(0)))
+                  MaterialCullingMode(currBlock\tex(0),#PB_Material_NoCulling)
                 EndIf
-                currBlock\tex(0) = CreateMaterial(#PB_Any,TextureID(currBlock\tex(0)))
-                MaterialCullingMode(currBlock\tex(0),#PB_Material_NoCulling)
+                
               Case "texture1":
                 date = GetFileDate(".\Textures\"+XMLAttributeValue(*ChildNode), #PB_Date_Modified)
                 If date > lastDate
@@ -741,6 +759,9 @@ Procedure LoadBlocks(Array blockArr.SBlocks(1), Map ABlockMap.SBlocks())
               ABlockMap()\tex(i) = currBlock\tex(i)
               If ABlockMap()\tex(i) 
                 MaterialBlendingMode(ABlockMap()\tex(i), #PB_Material_AlphaBlend)
+                ;MaterialShadingMode(ABlockMap()\tex(i),#PB_Material_Phong | #PB_Material_Solid)
+                ;MaterialShininess(ABlockMap()\tex(i), 999999999999999)
+                ;SetMaterialColor(ABlockMap()\tex(i),#PB_Material_SpecularColor,RGBA(255,0,0,255))
                 ;DisableMaterialLighting(ABlockMap()\tex(i),#True)
               EndIf
             Next
@@ -801,16 +822,19 @@ EndProcedure
 Procedure MoveStart(*playerpos.pos)
   If IsLight(0)
     MoveLight(0,*playerpos\x-100, *playerpos\z+300, *playerpos\y-200)
-    SetLightColor(1,#PB_Light_DiffuseColor,RGB(205, 200, 155))
   Else
     CreateLight(0, RGB(255, 255, 255), *playerpos\x-100, *playerpos\z+300, *playerpos\y-200)
   EndIf
+  
   If IsLight(1)
     MoveLight(1,*playerpos\x+300, *playerpos\z+400, *playerpos\y+200)
-    SetLightColor(1,#PB_Light_DiffuseColor,RGB(205, 200, 155))
   Else
     CreateLight(1, RGB(205, 200, 155),*playerpos\x+300, *playerpos\z+400, *playerpos\y+200)
   EndIf
+  SetLightColor(0,#PB_Light_DiffuseColor,RGB(205, 200, 155))
+  SetLightColor(0,#PB_Light_SpecularColor,RGBA(255, 255, 255,255))
+  SetLightColor(1,#PB_Light_DiffuseColor,RGB(205, 200, 155))
+  SetLightColor(1,#PB_Light_SpecularColor,RGBA(255, 255, 255,255))
   MoveCamera(0, *playerpos\x, *playerpos\z, *playerpos\y, #PB_Absolute)
   CameraLookAt(0, *playerpos\x+10, *playerpos\z, *playerpos\y)
 EndProcedure
@@ -1052,13 +1076,26 @@ Procedure UpdateProgress(*progH.pHnd, text.s, value)
 EndProcedure
 
 
+Procedure StopEditing()
+  If g_EditMode <> #mode_normal
+    g_EditMode = #mode_normal
+    HideToolBlock(#True)
+    If(IsStaticGeometry(schGeo\id))
+      WorldShadows(g_Shadows)
+      FreeStaticGeometry(schGeo\id)
+    EndIf
+    ClearList(SchBlocks())
+  EndIf
+EndProcedure
+
+
 
 
 
 
   
 ; IDE Options = PureBasic 5.72 (Windows - x64)
-; CursorPosition = 976
-; FirstLine = 959
+; CursorPosition = 649
+; FirstLine = 624
 ; Folding = -----
 ; EnableXP

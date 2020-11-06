@@ -8,7 +8,7 @@
 ; ------------------------------------------------------------
 ;
 
-#VERSION = "1.1.0."+#PB_Editor_BuildCount
+#VERSION = "1.1.1."+#PB_Editor_BuildCount
 
 #mode_init = -1
 #mode_normal = 0
@@ -49,6 +49,7 @@
 #distance_short = 150
 Global g_viewdistance = #distance_short
 Global Mutex = CreateMutex()
+Global ProgMutex = CreateMutex()
 Global DelMutex = CreateMutex()
 Global DrawMutex = CreateMutex()
 Global g_chunkborders = 1
@@ -282,7 +283,7 @@ If Not Add3DArchive("Textures\",#PB_3DArchive_FileSystem)
   MessageRequester("Missing ressources","Meshes and textures could not be located!!")
   End
 EndIf
-
+Parse3DScripts()
 ;WorldDir.s = g_saveDir+g_LastWorld+"/"; GetLApplicationDataDirectory()+"cyubeVR\Saved\WorldData\My Great World\"
 
 If(Not GetChunkList(g_saveDir+g_LastWorld+"/", @playerpos.pos))
@@ -307,8 +308,8 @@ StatusBarProgress(0,1,0)
     Result = OpenWindowedScreen(WindowID(0), 0, 0, WindowWidth(0,#PB_Window_InnerCoordinate), WindowHeight(0,#PB_Window_InnerCoordinate)-StatusBarHeight(0)-MenuHeight(), 0, 0, StatusBarHeight(0), #PB_Screen_SmartSynchronization)
     CreateCamera(0, 0, 0, 100, 100)
     CameraFOV(0, 50)
-    AmbientColor(RGB(200,200,220))
-    Sun(10,800,10,RGB(255,200,150))
+    AmbientColor(RGB(160,160,170))
+    Sun(10,400,10,RGB(255,240,200))
     
     If g_shadows = #PB_Shadow_Modulative
       WorldShadows(g_Shadows,30,RGB(210,205,230))
@@ -322,8 +323,8 @@ StatusBarProgress(0,1,0)
     camdist.f = 1.1 * (WindowHeight(0)/1000)
     MoveCamera(0,camdist,camdist,camdist,#PB_Absolute)
     CameraLookAt(0,0.06,0,0.06)
-    CreateLight(0, RGB(250, 250, 230), -100, 100, -100)
-    CreateLight(1, RGB(250, 250, 230), -100, 100, 100)
+    CreateLight(0, RGB(255, 250, 250), -100, 100, -100)
+    CreateLight(1, RGB(255, 250, 250), -100, 100, 100)
     CameraBackColor(0,RGB(255,255,255))
     DisableMenuInteraction(#True)
     g_CBlockDB = ConnectBlockDatabase()
@@ -776,7 +777,6 @@ Repeat
   ElseIf CameraY(0) < -50
     MoveCamera(0, CameraX(0), -50, CameraZ(0),#PB_Absolute)
   EndIf
-  
   If g_EditMode = #mode_cut 
     CameraFollow(0,NodeID(#ToolBlock),0,0,0.01,0.01,0)
     If KeyboardReleased(#PB_Key_Return)
@@ -821,7 +821,9 @@ Repeat
         schThread = CreateThread(@displayCYSchematic(),@prog)
         While i >= -90 And i <= 90
           i+rotstep
+          LockMutex(ProgMutex)
           progress = prog\i
+          UnlockMutex(ProgMutex)
           UpdateProgress(progH,"Rotating mesh..."+Str(progress)+"%",progress)
           RotateNode(#ToolBlock,0,90*i/100,0)
           RenderWorld()
@@ -829,7 +831,9 @@ Repeat
           Delay(20)
         Wend
         While IsThread(schThread)
+          LockMutex(ProgMutex)
           progress = prog\i
+          UnlockMutex(ProgMutex)
           UpdateProgress(progH,"Optimizing mesh..."+Str(progress)+"%",progress)
           RenderWorld()
           FlipBuffers()
@@ -863,15 +867,7 @@ Repeat
     EndIf
   
     If KeyboardReleased(#PB_Key_Escape)
-      If g_EditMode <> #mode_normal
-        g_EditMode = #mode_normal
-        HideToolBlock(#True)
-        If(IsStaticGeometry(schGeo\id))
-          WorldShadows(g_Shadows)
-          FreeStaticGeometry(schGeo\id)
-        EndIf
-        ClearList(SchBlocks())
-      EndIf
+      StopEditing()
     ElseIf KeyboardReleased(#PB_Key_P)
       If(g_ChunkLoadingPaused)
         g_ChunkLoadingPaused = #False
@@ -990,7 +986,7 @@ End
 
 
 ; IDE Options = PureBasic 5.72 (Windows - x64)
-; CursorPosition = 25
+; CursorPosition = 10
 ; Folding = -
 ; EnableXP
 ; Executable = test.exe
