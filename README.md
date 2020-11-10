@@ -1,7 +1,7 @@
 # cyube3dit
 *"CyubeVR swiss army knife"*
 
-**[cyube3dit](http://cyube3dit.el-wa.org) is a non-VR world editor tool for the virtual reality game [cyubeVR](https://www.cyubevr.com)**
+**[cyube3dit](http://cyube3dit.el-wa.org) is a non-VR world editor tool for the virtual reality game [cyubeVR](http://www.cyubevr.com)**
 
 
 
