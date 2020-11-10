@@ -1,7 +1,7 @@
 # cyube3dit
 *"CyubeVR swiss army knife"*
 
-**cyube3dit is a non-VR world editor tool for the virtual reality game [cyubeVR](https://www.cyubevr.com)**
+**[cyube3dit] (https://cyube3dit.el-wa.org) is a non-VR world editor tool for the virtual reality game [cyubeVR](https://www.cyubevr.com)**
 
 
 
@@ -11,6 +11,7 @@
 
 2. Unpack the .zip package to any folder with write permission.
 3. Doubleclick the executable.
+4. For further information visit the [CyubE3dit website] (https://cyube3dit.el-wa.org) 
 
 # User interface
 The Application will start as fullscreen window loading all installed custom blocks and preparing proper textures to display them accordingly. This process can be observed via the (maybe only very short) progress window, that also tells you how many custom blocks are loaded so far. The loading will be cached, so expect it to be only slow at the first start of the tool. Once this is done the application will start to load chunks from the last world you left, or the first world it finds within your save directory.
