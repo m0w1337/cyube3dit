@@ -7,7 +7,7 @@
   <section name="data">
     <explorer view="" pattern="0"/>
     <log show="1"/>
-    <lastopen date="2020-11-15 22:22" user="m0" host="DESKTOP-3MN1198"/>
+    <lastopen date="2020-11-15 23:08" user="m0" host="DESKTOP-3MN1198"/>
   </section>
   <section name="files">
     <file name="AsyncRenderer.pbi">
@@ -20,7 +20,7 @@
     </file>
     <file name="chunks.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="1808a35416e771f110b7237fce2758dc"/>
+      <fingerprint md5="c7e57ff675a81a5cebe15b6556a807d6"/>
     </file>
     <file name="database.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
@@ -32,11 +32,11 @@
     </file>
     <file name="Helper.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="501164f7de617dbd9c1df9a383946b62"/>
+      <fingerprint md5="b620beca2800c1a7d7ac172459b064fb"/>
     </file>
     <file name="loadCustomBlocks.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="bea2d26e773af476ef87e1103c098338"/>
+      <fingerprint md5="4b22b5ca486681943595162430804d4e"/>
     </file>
     <file name="loadSchematic.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
@@ -56,7 +56,7 @@
     </file>
     <file name="WorldView.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="eb4365e77fe212d437554e750ecd6798"/>
+      <fingerprint md5="94d8e46ebd6da447ba3204d4eeb20f4d"/>
     </file>
   </section>
   <section name="targets">
@@ -64,9 +64,9 @@
       <inputfile value="WorldView.pb"/>
       <outputfile value="Package\CyubeEdit.exe"/>
       <executable value="Package\CyubeEdit.exe"/>
-      <options thread="1" xpskin="1"/>
+      <options thread="1" xpskin="1" debug="1"/>
       <temporaryexe value="source"/>
-      <compilecount enable="1" value="1837"/>
+      <compilecount enable="1" value="1847"/>
       <buildcount enable="1" value="46"/>
       <versioninfo enable="1">
         <field0 value="1,1,2,%BUILDCOUNT"/>
@@ -84,6 +84,7 @@
       <constants>
         <constant value="VERSION" enable="1"/>
       </constants>
+      <watchlist>OpenDDSFast()&gt;filename</watchlist>
     </target>
   </section>
 </project>

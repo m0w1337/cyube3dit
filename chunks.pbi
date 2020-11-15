@@ -1048,7 +1048,7 @@ Procedure RebuildWorld()
   g_ChunkLoadingPaused = #False
 EndProcedure
 ; IDE Options = PureBasic 5.72 (Windows - x64)
-; CursorPosition = 98
-; FirstLine = 94
+; CursorPosition = 89
+; FirstLine = 69
 ; Folding = --
 ; EnableXP
