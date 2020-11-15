@@ -55,11 +55,11 @@ Procedure LoadCustomBlocks(CustomBlockDir.s, noUpload)
                   If date > lastDate
                     lastDate = date
                   EndIf
-                  texture = CreateTextureDDS(CustomBlockDir+DirectoryEntryName(0)+"\Textures\all.dds")
-                  If texture
-                    CBlocks(Str(CBid))\mode = CBmode
+                  CBlocks(Str(CBid))\tex(#texInd_all) = CreateTextureDDS(CustomBlockDir+DirectoryEntryName(0)+"\Textures\all.dds")
+                  If CBlocks()\tex(#texInd_all)
+                    CBlocks()\mode = CBmode
                     CBlocks()\id = CBid
-                    CBlocks()\tex(#texInd_all) =  CreateMaterial(#PB_Any,TextureID(texture))
+                    CBlocks()\mat(#texInd_all) =  CreateMaterial(#PB_Any,TextureID(CBlocks()\tex(#texInd_all)))
                     CBlocks()\name = CBname
                   EndIf
                 EndIf
@@ -69,11 +69,11 @@ Procedure LoadCustomBlocks(CustomBlockDir.s, noUpload)
                     If date > lastDate
                       lastDate = date
                     EndIf
-                    texture = CreateTextureDDS(CustomBlockDir+DirectoryEntryName(0)+"\Textures\sides.dds")
-                    If texture
-                      CBlocks(Str(CBid))\mode = CBmode
+                    CBlocks(Str(CBid))\tex(#texInd_sides) = CreateTextureDDS(CustomBlockDir+DirectoryEntryName(0)+"\Textures\sides.dds")
+                    If CBlocks()\tex(#texInd_sides)
+                      CBlocks()\mode = CBmode
                       CBlocks()\id = CBid
-                      CBlocks()\tex(#texInd_sides) =  CreateMaterial(#PB_Any,TextureID(texture))
+                      CBlocks()\mat(#texInd_sides) =  CreateMaterial(#PB_Any,TextureID(CBlocks()\tex(#texInd_sides)))
                       CBlocks()\name = CBname
                     EndIf
                   EndIf
@@ -82,10 +82,11 @@ Procedure LoadCustomBlocks(CustomBlockDir.s, noUpload)
                     If date > lastDate
                       lastDate = date
                     EndIf
-                    texture = CreateTextureDDS(CustomBlockDir+DirectoryEntryName(0)+"\Textures\updown.dds")
-                    If texture
-                      CBlocks()\tex(#texInd_upDown) =  CreateMaterial(#PB_Any,TextureID(texture))
+                    CBlocks(Str(CBid))\tex(#texInd_upDown) = CreateTextureDDS(CustomBlockDir+DirectoryEntryName(0)+"\Textures\updown.dds")
+                    If CBlocks()\tex(#texInd_upDown)
+                      CBlocks()\mat(#texInd_upDown) =  CreateMaterial(#PB_Any,TextureID(CBlocks()\tex(#texInd_upDown)))
                     Else
+                      CBlocks()\mat(#texInd_upDown) =  CBlocks()\mat(#texInd_sides)
                       CBlocks()\tex(#texInd_upDown) =  CBlocks()\tex(#texInd_sides)
                     EndIf
                   EndIf
@@ -95,11 +96,11 @@ Procedure LoadCustomBlocks(CustomBlockDir.s, noUpload)
                     If date > lastDate
                       lastDate = date
                     EndIf
-                    texture = CreateTextureDDS(CustomBlockDir+DirectoryEntryName(0)+"\Textures\sides.dds")
-                    If texture
-                      CBlocks(Str(CBid))\mode = CBmode
+                    CBlocks(Str(CBid))\tex(#texInd_sides) = CreateTextureDDS(CustomBlockDir+DirectoryEntryName(0)+"\Textures\sides.dds")
+                    If CBlocks()\tex(#texInd_sides)
+                      CBlocks()\mode = CBmode
                       CBlocks()\id = CBid
-                      CBlocks()\tex(#texInd_sides) =  CreateMaterial(#PB_Any,TextureID(texture))
+                      CBlocks()\mat(#texInd_sides) =  CreateMaterial(#PB_Any,TextureID(CBlocks()\tex(#texInd_sides)))
                       CBlocks()\name = CBname
                     EndIf
                   EndIf
@@ -108,11 +109,12 @@ Procedure LoadCustomBlocks(CustomBlockDir.s, noUpload)
                     If date > lastDate
                       lastDate = date
                     EndIf
-                    texture = CreateTextureDDS(CustomBlockDir+DirectoryEntryName(0)+"\Textures\up.dds")
-                    If texture
-                      CBlocks()\tex(#texInd_top) =  CreateMaterial(#PB_Any,TextureID(texture))
+                    CBlocks(Str(CBid))\tex(#texInd_top) = CreateTextureDDS(CustomBlockDir+DirectoryEntryName(0)+"\Textures\up.dds")
+                    If CBlocks()\tex(#texInd_top)
+                      CBlocks()\mat(#texInd_top) =  CreateMaterial(#PB_Any,TextureID(CBlocks()\tex(#texInd_top)))
                     Else
                       CBlocks()\tex(#texInd_top) =  CBlocks()\tex(#texInd_sides)
+                      CBlocks()\mat(#texInd_top) =  CBlocks()\mat(#texInd_sides)
                     EndIf
                   EndIf
                   If FileSize(CustomBlockDir+DirectoryEntryName(0)+"\Textures\down.dds")
@@ -120,11 +122,12 @@ Procedure LoadCustomBlocks(CustomBlockDir.s, noUpload)
                     If date > lastDate
                       lastDate = date
                     EndIf
-                    texture = CreateTextureDDS(CustomBlockDir+DirectoryEntryName(0)+"\Textures\down.dds")
-                    If texture
-                      CBlocks()\tex(#texInd_bottom) =  CreateMaterial(#PB_Any,TextureID(texture))
+                    CBlocks(Str(CBid))\tex(#texInd_bottom) = CreateTextureDDS(CustomBlockDir+DirectoryEntryName(0)+"\Textures\down.dds")
+                    If CBlocks()\tex(#texInd_bottom)
+                      CBlocks()\mat(#texInd_bottom) =  CreateMaterial(#PB_Any,TextureID(CBlocks()\tex(#texInd_bottom)))
                     Else
                       CBlocks()\tex(#texInd_bottom) =  CBlocks()\tex(#texInd_sides)
+                      CBlocks()\mat(#texInd_bottom) =  CBlocks()\mat(#texInd_sides)
                     EndIf
                   EndIf
                 Case 4:
@@ -133,11 +136,11 @@ Procedure LoadCustomBlocks(CustomBlockDir.s, noUpload)
                     If date > lastDate
                       lastDate = date
                     EndIf
-                    texture = CreateTextureDDS(CustomBlockDir+DirectoryEntryName(0)+"\Textures\up.dds")
-                    If texture
-                      CBlocks(Str(CBid))\mode = CBmode
+                    CBlocks(Str(CBid))\tex(#texInd_top) = CreateTextureDDS(CustomBlockDir+DirectoryEntryName(0)+"\Textures\up.dds")
+                    If CBlocks()\tex(#texInd_top)
+                      CBlocks()\mode = CBmode
                       CBlocks()\id = CBid
-                      CBlocks()\tex(#texInd_top) =  CreateMaterial(#PB_Any,TextureID(texture))
+                      CBlocks()\mat(#texInd_top) =  CreateMaterial(#PB_Any,TextureID(CBlocks()\tex(#texInd_top)))
                       CBlocks()\name = CBname
                     EndIf
                   EndIf
@@ -146,11 +149,12 @@ Procedure LoadCustomBlocks(CustomBlockDir.s, noUpload)
                     If date > lastDate
                       lastDate = date
                     EndIf
-                    texture = CreateTextureDDS(CustomBlockDir+DirectoryEntryName(0)+"\Textures\down.dds")
-                    If texture
-                      CBlocks()\tex(#texInd_bottom) =  CreateMaterial(#PB_Any,TextureID(texture))
+                    CBlocks(Str(CBid))\tex(#texInd_bottom) = CreateTextureDDS(CustomBlockDir+DirectoryEntryName(0)+"\Textures\down.dds")
+                    If CBlocks()\tex(#texInd_bottom)
+                      CBlocks()\mat(#texInd_bottom) =  CreateMaterial(#PB_Any,TextureID(CBlocks()\tex(#texInd_bottom)))
                     Else
                       CBlocks()\tex(#texInd_bottom) =  CBlocks()\tex(#texInd_top)
+                      CBlocks()\mat(#texInd_bottom) =  CBlocks()\mat(#texInd_top)
                     EndIf
                   EndIf
                   If FileSize(CustomBlockDir+DirectoryEntryName(0)+"\Textures\left.dds")
@@ -158,11 +162,12 @@ Procedure LoadCustomBlocks(CustomBlockDir.s, noUpload)
                     If date > lastDate
                       lastDate = date
                     EndIf
-                    texture = CreateTextureDDS(CustomBlockDir+DirectoryEntryName(0)+"\Textures\left.dds")
-                    If texture
-                      CBlocks()\tex(#texInd_left) =  CreateMaterial(#PB_Any,TextureID(texture))
+                    CBlocks(Str(CBid))\tex(#texInd_left) = CreateTextureDDS(CustomBlockDir+DirectoryEntryName(0)+"\Textures\left.dds")
+                    If CBlocks()\tex(#texInd_left)
+                      CBlocks()\mat(#texInd_left) =  CreateMaterial(#PB_Any,TextureID(CBlocks()\tex(#texInd_left)))
                     Else
                       CBlocks()\tex(#texInd_left) =  CBlocks()\tex(#texInd_top)
+                      CBlocks()\mat(#texInd_left) =  CBlocks()\mat(#texInd_top)
                     EndIf
                   EndIf
                   If FileSize(CustomBlockDir+DirectoryEntryName(0)+"\Textures\right.dds")
@@ -170,11 +175,12 @@ Procedure LoadCustomBlocks(CustomBlockDir.s, noUpload)
                     If date > lastDate
                       lastDate = date
                     EndIf
-                    texture = CreateTextureDDS(CustomBlockDir+DirectoryEntryName(0)+"\Textures\right.dds")
-                    If texture
-                      CBlocks()\tex(#texInd_right) =  CreateMaterial(#PB_Any,TextureID(texture))
+                    CBlocks(Str(CBid))\tex(#texInd_right) = CreateTextureDDS(CustomBlockDir+DirectoryEntryName(0)+"\Textures\right.dds")
+                    If CBlocks()\tex(#texInd_right)
+                      CBlocks()\mat(#texInd_right) =  CreateMaterial(#PB_Any,TextureID(CBlocks()\tex(#texInd_right)))
                     Else
                       CBlocks()\tex(#texInd_right) =  CBlocks()\tex(#texInd_top)
+                      CBlocks()\mat(#texInd_right) =  CBlocks()\mat(#texInd_top)
                     EndIf
                   EndIf
                   If FileSize(CustomBlockDir+DirectoryEntryName(0)+"\Textures\front.dds")
@@ -182,11 +188,12 @@ Procedure LoadCustomBlocks(CustomBlockDir.s, noUpload)
                     If date > lastDate
                       lastDate = date
                     EndIf
-                    texture = CreateTextureDDS(CustomBlockDir+DirectoryEntryName(0)+"\Textures\front.dds")
-                    If texture
-                      CBlocks()\tex(#texInd_front) =  CreateMaterial(#PB_Any,TextureID(texture))
+                    CBlocks(Str(CBid))\tex(#texInd_front) = CreateTextureDDS(CustomBlockDir+DirectoryEntryName(0)+"\Textures\front.dds")
+                    If CBlocks()\tex(#texInd_front)
+                      CBlocks()\mat(#texInd_front) =  CreateMaterial(#PB_Any,TextureID(CBlocks()\tex(#texInd_front)))
                     Else
                       CBlocks()\tex(#texInd_front) =  CBlocks()\tex(#texInd_top)
+                      CBlocks()\mat(#texInd_front) =  CBlocks()\mat(#texInd_top)
                     EndIf
                   EndIf
                   If FileSize(CustomBlockDir+DirectoryEntryName(0)+"\Textures\back.dds")
@@ -194,11 +201,12 @@ Procedure LoadCustomBlocks(CustomBlockDir.s, noUpload)
                     If date > lastDate
                       lastDate = date
                     EndIf
-                    texture = CreateTextureDDS(CustomBlockDir+DirectoryEntryName(0)+"\Textures\back.dds")
-                    If texture
-                      CBlocks()\tex(#texInd_back) =  CreateMaterial(#PB_Any,TextureID(texture))
+                    CBlocks(Str(CBid))\tex(#texInd_back) = CreateTextureDDS(CustomBlockDir+DirectoryEntryName(0)+"\Textures\back.dds")
+                    If CBlocks()\tex(#texInd_back)
+                      CBlocks()\mat(#texInd_back) =  CreateMaterial(#PB_Any,TextureID(CBlocks()\tex(#texInd_back)))
                     Else
                       CBlocks()\tex(#texInd_back) =  CBlocks()\tex(#texInd_top)
+                      CBlocks()\mat(#texInd_back) =  CBlocks()\mat(#texInd_top)
                     EndIf
                   EndIf
               EndSelect
@@ -211,7 +219,7 @@ Procedure LoadCustomBlocks(CustomBlockDir.s, noUpload)
             If update 
               SaveBlockPreview(66, CBlocks()\id, noUpload,CBauthor)
             EndIf
-            CBlocks()\prev = LoadImage(#PB_Any,GetLApplicationDataDirectory()+"CyubE3dit\cblock_prev\"+Str(CBlocks()\id)+".png")
+            ;CBlocks()\prev = LoadImage(#PB_Any,GetLApplicationDataDirectory()+"CyubE3dit\cblock_prev\"+Str(CBlocks()\id)+".png")
             StatusBarText(0,0,"Found "+MapSize(CBlocks())+" custom blocks so far. (Last Added '"+CBname+"')")
              While WindowEvent()
              Wend
@@ -229,7 +237,7 @@ EndProcedure
 
 
 ; IDE Options = PureBasic 5.72 (Windows - x64)
-; CursorPosition = 9
-; FirstLine = 3
+; CursorPosition = 203
+; FirstLine = 180
 ; Folding = -
 ; EnableXP

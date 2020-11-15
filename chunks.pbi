@@ -93,36 +93,36 @@ Macro AddBlockToGeo(GeoID,BBGeoID,SchBlocks,startx,starty,startz, showBorders)
         If Not FindMapElement(CBlocks(),Str(cID))
           addCustomBlock(cID,0)
         EndIf
-        BMode = CBlocks()\mode
-        Select BMode
+        
+        Select CBlocks()\mode
           Case 1:
-            SetEntityMaterial(#FaceTop,MaterialID(CBlocks()\tex(#texInd_all)))
-            SetEntityMaterial(#FaceBottom,MaterialID(CBlocks()\tex(#texInd_all)))
-            SetEntityMaterial(#FaceLeft,MaterialID(CBlocks()\tex(#texInd_all)))
-            SetEntityMaterial(#FaceRight,MaterialID(CBlocks()\tex(#texInd_all)))
-            SetEntityMaterial(#FaceFront,MaterialID(CBlocks()\tex(#texInd_all)))
-            SetEntityMaterial(#FaceBack,MaterialID(CBlocks()\tex(#texInd_all)))
+            SetEntityMaterial(#FaceTop,MaterialID(CBlocks()\mat(#texInd_all)))
+            SetEntityMaterial(#FaceBottom,MaterialID(CBlocks()\mat(#texInd_all)))
+            SetEntityMaterial(#FaceLeft,MaterialID(CBlocks()\mat(#texInd_all)))
+            SetEntityMaterial(#FaceRight,MaterialID(CBlocks()\mat(#texInd_all)))
+            SetEntityMaterial(#FaceFront,MaterialID(CBlocks()\mat(#texInd_all)))
+            SetEntityMaterial(#FaceBack,MaterialID(CBlocks()\mat(#texInd_all)))
           Case 2:
-            SetEntityMaterial(#FaceTop,MaterialID(CBlocks()\tex(#texInd_upDown)))
-            SetEntityMaterial(#FaceBottom,MaterialID(CBlocks()\tex(#texInd_upDown)))
-            SetEntityMaterial(#FaceLeft,MaterialID(CBlocks()\tex(#texInd_sides)))
-            SetEntityMaterial(#FaceRight,MaterialID(CBlocks()\tex(#texInd_sides)))
-            SetEntityMaterial(#FaceFront,MaterialID(CBlocks()\tex(#texInd_sides)))
-            SetEntityMaterial(#FaceBack,MaterialID(CBlocks()\tex(#texInd_sides)))
+            SetEntityMaterial(#FaceTop,MaterialID(CBlocks()\mat(#texInd_upDown)))
+            SetEntityMaterial(#FaceBottom,MaterialID(CBlocks()\mat(#texInd_upDown)))
+            SetEntityMaterial(#FaceLeft,MaterialID(CBlocks()\mat(#texInd_sides)))
+            SetEntityMaterial(#FaceRight,MaterialID(CBlocks()\mat(#texInd_sides)))
+            SetEntityMaterial(#FaceFront,MaterialID(CBlocks()\mat(#texInd_sides)))
+            SetEntityMaterial(#FaceBack,MaterialID(CBlocks()\mat(#texInd_sides)))
           Case 3:
-            SetEntityMaterial(#FaceTop,MaterialID(CBlocks()\tex(#texInd_top)))
-            SetEntityMaterial(#FaceBottom,MaterialID(CBlocks()\tex(#texInd_bottom)))
-            SetEntityMaterial(#FaceLeft,MaterialID(CBlocks()\tex(#texInd_sides)))
-            SetEntityMaterial(#FaceRight,MaterialID(CBlocks()\tex(#texInd_sides)))
-            SetEntityMaterial(#FaceFront,MaterialID(CBlocks()\tex(#texInd_sides)))
-            SetEntityMaterial(#FaceBack,MaterialID(CBlocks()\tex(#texInd_sides)))
+            SetEntityMaterial(#FaceTop,MaterialID(CBlocks()\mat(#texInd_top)))
+            SetEntityMaterial(#FaceBottom,MaterialID(CBlocks()\mat(#texInd_bottom)))
+            SetEntityMaterial(#FaceLeft,MaterialID(CBlocks()\mat(#texInd_sides)))
+            SetEntityMaterial(#FaceRight,MaterialID(CBlocks()\mat(#texInd_sides)))
+            SetEntityMaterial(#FaceFront,MaterialID(CBlocks()\mat(#texInd_sides)))
+            SetEntityMaterial(#FaceBack,MaterialID(CBlocks()\mat(#texInd_sides)))
           Case 4:
-            SetEntityMaterial(#FaceTop,MaterialID(CBlocks()\tex(#texInd_top)))
-            SetEntityMaterial(#FaceBottom,MaterialID(CBlocks()\tex(#texInd_bottom)))
-            SetEntityMaterial(#FaceLeft,MaterialID(CBlocks()\tex(#texInd_left)))
-            SetEntityMaterial(#FaceRight,MaterialID(CBlocks()\tex(#texInd_right)))
-            SetEntityMaterial(#FaceFront,MaterialID(CBlocks()\tex(#texInd_front)))
-            SetEntityMaterial(#FaceBack,MaterialID(CBlocks()\tex(#texInd_back)))
+            SetEntityMaterial(#FaceTop,MaterialID(CBlocks()\mat(#texInd_top)))
+            SetEntityMaterial(#FaceBottom,MaterialID(CBlocks()\mat(#texInd_bottom)))
+            SetEntityMaterial(#FaceLeft,MaterialID(CBlocks()\mat(#texInd_left)))
+            SetEntityMaterial(#FaceRight,MaterialID(CBlocks()\mat(#texInd_right)))
+            SetEntityMaterial(#FaceFront,MaterialID(CBlocks()\mat(#texInd_front)))
+            SetEntityMaterial(#FaceBack,MaterialID(CBlocks()\mat(#texInd_back)))
         EndSelect
         lastID = 66
       EndIf
@@ -130,42 +130,42 @@ Macro AddBlockToGeo(GeoID,BBGeoID,SchBlocks,startx,starty,startz, showBorders)
       lastcID = -1
       Select SBlocks(id)\mode
         Case 0:
-          SetEntityMaterial(#FaceTop,MaterialID(SBlocks(id)\tex(#texInd_all)))
-          SetEntityMaterial(#FaceBottom,MaterialID(SBlocks(id)\tex(#texInd_all)))
-          SetEntityMaterial(#FaceLeft,MaterialID(SBlocks(id)\tex(#texInd_all)))
-          SetEntityMaterial(#FaceRight,MaterialID(SBlocks(id)\tex(#texInd_all)))
-          SetEntityMaterial(#FaceFront,MaterialID(SBlocks(id)\tex(#texInd_all)))
-          SetEntityMaterial(#FaceBack,MaterialID(SBlocks(id)\tex(#texInd_all)))
+          SetEntityMaterial(#FaceTop,MaterialID(SBlocks(id)\mat(#texInd_all)))
+          SetEntityMaterial(#FaceBottom,MaterialID(SBlocks(id)\mat(#texInd_all)))
+          SetEntityMaterial(#FaceLeft,MaterialID(SBlocks(id)\mat(#texInd_all)))
+          SetEntityMaterial(#FaceRight,MaterialID(SBlocks(id)\mat(#texInd_all)))
+          SetEntityMaterial(#FaceFront,MaterialID(SBlocks(id)\mat(#texInd_all)))
+          SetEntityMaterial(#FaceBack,MaterialID(SBlocks(id)\mat(#texInd_all)))
         Case 1:
-          SetEntityMaterial(#FaceTop,MaterialID(SBlocks(id)\tex(#texInd_all)))
-          SetEntityMaterial(#FaceBottom,MaterialID(SBlocks(id)\tex(#texInd_all)))
-          SetEntityMaterial(#FaceLeft,MaterialID(SBlocks(id)\tex(#texInd_all)))
-          SetEntityMaterial(#FaceRight,MaterialID(SBlocks(id)\tex(#texInd_all)))
-          SetEntityMaterial(#FaceFront,MaterialID(SBlocks(id)\tex(#texInd_all)))
-          SetEntityMaterial(#FaceBack,MaterialID(SBlocks(id)\tex(#texInd_all)))
+          SetEntityMaterial(#FaceTop,MaterialID(SBlocks(id)\mat(#texInd_all)))
+          SetEntityMaterial(#FaceBottom,MaterialID(SBlocks(id)\mat(#texInd_all)))
+          SetEntityMaterial(#FaceLeft,MaterialID(SBlocks(id)\mat(#texInd_all)))
+          SetEntityMaterial(#FaceRight,MaterialID(SBlocks(id)\mat(#texInd_all)))
+          SetEntityMaterial(#FaceFront,MaterialID(SBlocks(id)\mat(#texInd_all)))
+          SetEntityMaterial(#FaceBack,MaterialID(SBlocks(id)\mat(#texInd_all)))
         Case 2:
-          SetEntityMaterial(#FaceTop,MaterialID(SBlocks(id)\tex(#texInd_upDown)))
-          SetEntityMaterial(#FaceBottom,MaterialID(SBlocks(id)\tex(#texInd_upDown)))
-          SetEntityMaterial(#FaceLeft,MaterialID(SBlocks(id)\tex(#texInd_sides)))
-          SetEntityMaterial(#FaceRight,MaterialID(SBlocks(id)\tex(#texInd_sides)))
-          SetEntityMaterial(#FaceFront,MaterialID(SBlocks(id)\tex(#texInd_sides)))
-          SetEntityMaterial(#FaceBack,MaterialID(SBlocks(id)\tex(#texInd_sides)))
+          SetEntityMaterial(#FaceTop,MaterialID(SBlocks(id)\mat(#texInd_upDown)))
+          SetEntityMaterial(#FaceBottom,MaterialID(SBlocks(id)\mat(#texInd_upDown)))
+          SetEntityMaterial(#FaceLeft,MaterialID(SBlocks(id)\mat(#texInd_sides)))
+          SetEntityMaterial(#FaceRight,MaterialID(SBlocks(id)\mat(#texInd_sides)))
+          SetEntityMaterial(#FaceFront,MaterialID(SBlocks(id)\mat(#texInd_sides)))
+          SetEntityMaterial(#FaceBack,MaterialID(SBlocks(id)\mat(#texInd_sides)))
         Case 3:
-          SetEntityMaterial(#FaceTop,MaterialID(SBlocks(id)\tex(#texInd_top)))
-          SetEntityMaterial(#FaceBottom,MaterialID(SBlocks(id)\tex(#texInd_bottom)))
-          SetEntityMaterial(#FaceLeft,MaterialID(SBlocks(id)\tex(#texInd_sides)))
-          SetEntityMaterial(#FaceRight,MaterialID(SBlocks(id)\tex(#texInd_sides)))
-          SetEntityMaterial(#FaceFront,MaterialID(SBlocks(id)\tex(#texInd_sides)))
-          SetEntityMaterial(#FaceBack,MaterialID(SBlocks(id)\tex(#texInd_sides)))
+          SetEntityMaterial(#FaceTop,MaterialID(SBlocks(id)\mat(#texInd_top)))
+          SetEntityMaterial(#FaceBottom,MaterialID(SBlocks(id)\mat(#texInd_bottom)))
+          SetEntityMaterial(#FaceLeft,MaterialID(SBlocks(id)\mat(#texInd_sides)))
+          SetEntityMaterial(#FaceRight,MaterialID(SBlocks(id)\mat(#texInd_sides)))
+          SetEntityMaterial(#FaceFront,MaterialID(SBlocks(id)\mat(#texInd_sides)))
+          SetEntityMaterial(#FaceBack,MaterialID(SBlocks(id)\mat(#texInd_sides)))
         Case 4:
-          SetEntityMaterial(#FaceTop,MaterialID(SBlocks(id)\tex(#texInd_top)))
-          SetEntityMaterial(#FaceBottom,MaterialID(SBlocks(id)\tex(#texInd_bottom)))
-          SetEntityMaterial(#FaceLeft,MaterialID(SBlocks(id)\tex(#texInd_left)))
-          SetEntityMaterial(#FaceRight,MaterialID(SBlocks(id)\tex(#texInd_right)))
-          SetEntityMaterial(#FaceFront,MaterialID(SBlocks(id)\tex(#texInd_front)))
-          SetEntityMaterial(#FaceBack,MaterialID(SBlocks(id)\tex(#texInd_back)))
+          SetEntityMaterial(#FaceTop,MaterialID(SBlocks(id)\mat(#texInd_top)))
+          SetEntityMaterial(#FaceBottom,MaterialID(SBlocks(id)\mat(#texInd_bottom)))
+          SetEntityMaterial(#FaceLeft,MaterialID(SBlocks(id)\mat(#texInd_left)))
+          SetEntityMaterial(#FaceRight,MaterialID(SBlocks(id)\mat(#texInd_right)))
+          SetEntityMaterial(#FaceFront,MaterialID(SBlocks(id)\mat(#texInd_front)))
+          SetEntityMaterial(#FaceBack,MaterialID(SBlocks(id)\mat(#texInd_back)))
         Case 5:
-          SetEntityMaterial(#BillBoardMesh,MaterialID(SBlocks(id)\tex(#texInd_all)))
+          SetEntityMaterial(#BillBoardMesh,MaterialID(SBlocks(id)\mat(#texInd_all)))
       EndSelect
       lastID = id
     EndIf
@@ -1048,7 +1048,7 @@ Procedure RebuildWorld()
   g_ChunkLoadingPaused = #False
 EndProcedure
 ; IDE Options = PureBasic 5.72 (Windows - x64)
-; CursorPosition = 1047
-; FirstLine = 997
+; CursorPosition = 98
+; FirstLine = 94
 ; Folding = --
 ; EnableXP

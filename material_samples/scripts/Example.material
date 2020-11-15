@@ -1,5 +1,5 @@
 
-material Examples/EnvMappedRustySteel
+material EnvMappedRustySteel
 {
 	technique
 	{

@@ -8,13 +8,14 @@
 ; ------------------------------------------------------------
 ;
 
-#VERSION = "1.1.1."+#PB_Editor_BuildCount
+#VERSION = "1.1.2."+#PB_Editor_BuildCount
 
 #mode_init = -1
 #mode_normal = 0
 #mode_cut = 1
 #mode_insert = 2
 #mode_chunksel_nodel = 3
+#mode_fill = 4
 
 #maxSchemXZ = 600
 #maxSchemY = 300
@@ -123,6 +124,7 @@ Structure chunk
   Structure CBlocks
     name.s
     Array tex.l(6)
+    Array mat.l(6)
     prev.l
     id.l
     mode.a
@@ -131,6 +133,7 @@ Structure chunk
   Structure SBlocks
     name.s
     Array tex.l(6)
+    Array mat.l(6)
     mesh.l
     mode.a
     type.a
@@ -165,7 +168,7 @@ Global Dim g_prepareNewChunk.i(#numthreads-1)
 Global Dim thread(#numthreads)
 Global g_deleteChunk.l
 Global Dim g_chunk0ToRender.i(#numthreads-1)
-Global schBox.box
+Global toolBox.box
 Global NewList SchBlocks.block()
 Global currentchunk.xy  
 Global NewList Markers.marker()
@@ -307,15 +310,12 @@ StatusBarProgress(0,1,0)
     
     Result = OpenWindowedScreen(WindowID(0), 0, 0, WindowWidth(0,#PB_Window_InnerCoordinate), WindowHeight(0,#PB_Window_InnerCoordinate)-StatusBarHeight(0)-MenuHeight(), 0, 0, StatusBarHeight(0), #PB_Screen_SmartSynchronization)
     CreateCamera(0, 0, 0, 100, 100)
+    CameraRange(0, 0.5, 700)
     CameraFOV(0, 50)
-    AmbientColor(RGB(160,160,170))
-    Sun(10,400,10,RGB(255,240,200))
-    
-    If g_shadows = #PB_Shadow_Modulative
-      WorldShadows(g_Shadows,30,RGB(210,205,230))
-    Else
-      WorldShadows(g_Shadows,25,RGB(10,10,30),256)
-    EndIf
+    AmbientColor(RGB(255,255,255))
+    Parse3DScripts()
+    ;Sun(10,400,10,RGB(255,240,200))
+ 
     
     EnableWorldPhysics(#False)
     EnableWorldCollisions(#False)
@@ -323,8 +323,8 @@ StatusBarProgress(0,1,0)
     camdist.f = 1.1 * (WindowHeight(0)/1000)
     MoveCamera(0,camdist,camdist,camdist,#PB_Absolute)
     CameraLookAt(0,0.06,0,0.06)
-    CreateLight(0, RGB(255, 250, 250), -100, 100, -100)
-    CreateLight(1, RGB(255, 250, 250), -100, 100, 100)
+    CreateLight(0, RGB(255, 255, 255), camdist/2, camdist, camdist/3)
+    CreateLight(1, RGB(255, 255, 255), camdist, 0, -camdist*1.2)
     CameraBackColor(0,RGB(255,255,255))
     DisableMenuInteraction(#True)
     g_CBlockDB = ConnectBlockDatabase()
@@ -352,54 +352,24 @@ StatusBarProgress(0,1,0)
         CreateMaterial(i,TextureID(i))
       EndIf
     Next
-    CreateTexture(#Marker_green,256,256)
-    StartDrawing(TextureOutput(#Marker_green))
-    DrawingMode(#PB_2DDrawing_AlphaBlend)
-    Box(0,0,256,256,RGBA(50,200,50,70))
-    DrawingMode(#PB_2DDrawing_Outlined)
-    Box(0,0,256,256,RGB(0,200,0))
-    StopDrawing()
-    CreateMaterial(#Marker_green,TextureID(#Marker_green))
-    MaterialBlendingMode(#Marker_green,#PB_Material_AlphaBlend)
-    MaterialCullingMode(#Marker_green,#PB_Material_NoCulling)
+        
+    initToolBlock()
     
-    LoadTexture(#ToolBlock,"Toolblock.png")
-    LoadTexture(#ToolBlock_act,"Toolblock_act.png")
-    CreateMaterial(#ToolBlock,TextureID(#ToolBlock))
-    CreateMaterial(#ToolBlock_act,TextureID(#ToolBlock_act))
-    MaterialBlendingMode(#ToolBlock, #PB_Material_AlphaBlend)
-    MaterialBlendingMode(#ToolBlock_act, #PB_Material_AlphaBlend)
-    MaterialCullingMode(#ToolBlock,#PB_Material_NoCulling)
-    MaterialCullingMode(#ToolBlock_act,#PB_Material_NoCulling)
    
-    
-    CreateEntity(#ToolFaceTop, MeshID(#FaceTop), MaterialID(#ToolBlock))
-    CreateEntity(#ToolFaceBottom, MeshID(#FaceBottom), MaterialID(#ToolBlock))
-    CreateEntity(#ToolFaceLeft, MeshID(#FaceLeft), MaterialID(#ToolBlock))
-    CreateEntity(#ToolFaceRight, MeshID(#FaceRight), MaterialID(#ToolBlock))
-    
-    CreateEntity(#ToolFaceBack, MeshID(#FaceBack), MaterialID(#ToolBlock))
-    CreateEntity(#ToolFaceFront, MeshID(#FaceFront), MaterialID(#ToolBlock))
-    CreateNode(#ToolBlock)
-    AttachNodeObject(#ToolBlock,EntityID(#ToolFaceTop))
-    AttachNodeObject(#ToolBlock,EntityID(#ToolFaceBottom))
-    AttachNodeObject(#ToolBlock,EntityID(#ToolFaceLeft))
-    AttachNodeObject(#ToolBlock,EntityID(#ToolFaceRight))
-    AttachNodeObject(#ToolBlock,EntityID(#ToolFaceFront))
-    AttachNodeObject(#ToolBlock,EntityID(#ToolFaceBack))
-    
-     ScaleToolBlock(1.01,1.01,1.01,#PB_Absolute)
-     HideToolBlock(#True)
-
-   
- CompilerIf #PB_Compiler_Debugger = 0
+ ;CompilerIf #PB_Compiler_Debugger = 0
    
    LoadCustomBlocks(g_steamAppsDir+"workshop\content\619500\",0)
    LoadCustomBlocks(g_steamAppsDir+"common\cyubeVR\cyubeVR\Mods\Blocks\",g_noLocalMods)
    StatusBarText(0,0,"Custom Blocks loaded!")
    StatusBarProgress(0,1,0)
    
- CompilerEndIf
+ ;CompilerEndIf
+ AmbientColor(RGB(170,170,190))
+ If g_shadows = #PB_Shadow_Modulative
+      WorldShadows(g_Shadows,30,RGB(210,205,230))
+    Else
+      WorldShadows(g_Shadows,25,RGB(10,10,30),256)
+    EndIf
 DisableMenuInteraction(#False)
 CameraBackColor(0,RGB(100,100,255))
 MoveStart(@playerpos)
@@ -419,6 +389,14 @@ CameraBackColor(0, RGB(100, 156, 251))
 MouseWheel()
 SkyDome("clouds.jpg", 10)
 
+HideEntity(#FaceTop,#True)
+HideEntity(#FaceBottom,#True)
+HideEntity(#FaceLeft,#True)
+HideEntity(#FaceRight,#True)
+HideEntity(#FaceFront,#True)
+HideEntity(#FaceBack,#True)
+HideEntity(#BillBoardMesh,#True)
+
 Fog(RGB(30,40,40),2, 32, 512)
 ReleaseMouse(#True)
 chunkdrawTime.l = 0
@@ -433,15 +411,16 @@ MouseCatch = #False
 Repeat    
   event = WindowEvent()
   If(g_chunk0ToRender(drawthread) = 1)
-      If drawChunk(g_prepareID(drawthread),drawthread,g_prepareX(drawthread),g_prepareY(drawthread),rstMaterials)
-        g_chunk0ToRender(drawthread) = 0
-        drawthread = drawthread + 1
-        If(drawthread >= #numthreads)
-          drawthread = 0
-        EndIf
+    If drawChunk(g_prepareID(drawthread),drawthread,g_prepareX(drawthread),g_prepareY(drawthread),rstMaterials)
+      g_chunk0ToRender(drawthread) = 0
+      drawthread = drawthread + 1
+      If(drawthread >= #numthreads)
+        drawthread = 0
       EndIf
-      rstMaterials = 1
+    EndIf
+    rstMaterials = 1
   Else
+    rstMaterials = 1
     drawthread = drawthread + 1
     If(drawthread >= #numthreads)
       drawthread = 0
@@ -489,7 +468,7 @@ Repeat
             UpdateProgress(progH,"Building mesh..."+Str(prcnt)+"%",prcnt)
             lastdone = 0
           EndIf
-          AddBlockToGeo(schGeo\id,schGeo\id,SchBlocks(),schBox\x1,schBox\y1,schBox\z1,0)
+          AddBlockToGeo(schGeo\id,schGeo\id,SchBlocks(),toolBox\x1,toolBox\y1,toolBox\z1,0)
           done + 1
         Wend
         UpdateProgress(progH,"Building mesh..."+Str(99)+"%",99)
@@ -518,7 +497,7 @@ Repeat
     HandleMenuEvents(EventMenu())
   EndIf
   
-  If( GetMouseButtonState(#PB_MouseButton_Left) And MouseCatch = #False And EventWindow() = 0 )
+  If( GetMouseButtonState(#PB_MouseButton_Left) And MouseCatch = #False)
     mposX = DesktopMouseX()
     mposY = DesktopMouseY()
     wmposX = WindowMouseX(0)
@@ -563,6 +542,9 @@ Repeat
             Case #mode_insert:
               grid = 1
               gridY = 1
+            Case #mode_fill:
+              grid = 1
+              gridY = 1
             Case #mode_chunksel_nodel
               grid = 32
               gridY = 0
@@ -601,19 +583,19 @@ Repeat
           mDeltaSnapY = mDeltaSnapY / SnapSize
           
           If KeyboardPushed(#PB_Key_LeftShift)
-            If g_EditMode = #mode_cut Or g_EditMode = #mode_chunksel_nodel
-              If(GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleX)  - Abs(MoveToolZ)*grid*mDeltaSnapX >= grid And GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleX)  - Abs(MoveToolZ) * grid * mDeltaSnapX <= #maxSchemXZ * grid And GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleZ)  - Abs(MoveToolX) * grid * mDeltaSnapX >= grid And GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleZ)  - Abs(MoveToolX) * grid * mDeltaSnapX <= #maxSchemXZ * grid)
-                ScaleToolBlock(GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleX) - Abs(MoveToolZ)*grid*mDeltaSnapX,GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleY),GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleZ) - Abs(MoveToolX)*grid*mDeltaSnapX,#PB_Absolute)
+            If g_EditMode = #mode_cut Or g_EditMode = #mode_chunksel_nodel Or g_EditMode = #mode_fill
+              If(toolBox\sx  - Abs(MoveToolZ)*grid*mDeltaSnapX >= grid And toolBox\sx  - Abs(MoveToolZ) * grid * mDeltaSnapX <= #maxSchemXZ * grid And toolBox\sz  - Abs(MoveToolX) * grid * mDeltaSnapX >= grid And toolBox\sz  - Abs(MoveToolX) * grid * mDeltaSnapX <= #maxSchemXZ * grid)
+                ScaleToolBlock(toolBox\sx - Abs(MoveToolZ) * grid * mDeltaSnapX, toolBox\sy, toolBox\sz - Abs(MoveToolX)*grid*mDeltaSnapX)
                 MoveNode(#ToolBlock,0.25 * MovetoolZ*grid*mDeltaSnapX,0,-0.25*MoveToolX*grid*mDeltaSnapX,#PB_Relative)
               EndIf
-              If(GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleY) - gridY * mDeltaSnapY >= gridY And GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleY) - gridY * mDeltaSnapY <= gridY * #maxSchemY And (GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleY) - gridY * mDeltaSnapY) / 4 + (NodeY(#ToolBlock) - 0.25*gridY*mDeltaSnapY) <= 800)
-                ScaleToolBlock(GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleX),GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleY)-1*gridY*mDeltaSnapY,GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleZ),#PB_Absolute)
+              If(toolBox\sy - gridY * mDeltaSnapY >= gridY And toolBox\sy - gridY * mDeltaSnapY <= gridY * #maxSchemY And (toolBox\sy - gridY * mDeltaSnapY) / 4 + (NodeY(#ToolBlock) - 0.25*gridY*mDeltaSnapY) <= 800)
+                ScaleToolBlock(toolBox\sx, toolBox\sy - gridY * mDeltaSnapY,toolBox\sz)
                 MoveNode(#ToolBlock,0,-0.25*gridY*mDeltaSnapY,0,#PB_Relative)
               EndIf
             EndIf
           Else
             MoveNode(#ToolBlock,0.5 * MoveToolZ * grid * mDeltaSnapX,0,-0.5 * MoveToolX * grid * mDeltaSnapX,#PB_Relative)
-            If(NodeY(#ToolBlock) - 0.5 * gridY * mDeltaSnapY - GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleY)/4 >= 0 And NodeY(#ToolBlock) - 0.5 * gridY * mDeltaSnapY + GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleY)/4 <= 800)
+            If(NodeY(#ToolBlock) - 0.5 * gridY * mDeltaSnapY - toolBox\sy /4 >= 0 And NodeY(#ToolBlock) - 0.5 * gridY * mDeltaSnapY + toolBox\sy / 4 <= 800)
               MoveNode(#ToolBlock,0,-0.5 * gridY * mDeltaSnapY,0,#PB_Relative)
             EndIf
           EndIf
@@ -622,9 +604,9 @@ Repeat
         EndIf
         If(zoom)
           If KeyboardPushed(#PB_Key_LeftShift)
-            If g_EditMode = #mode_cut Or g_EditMode = #mode_chunksel_nodel
-              If(GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleX) - MoveToolX*grid*zoom >= grid And GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleX) - MoveToolX*grid*zoom <= #maxSchemXZ*grid And GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleZ) + MoveToolZ*grid*zoom >= grid And GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleZ) + MoveToolZ*grid*zoom <= #maxSchemXZ*grid)
-                ScaleToolBlock(GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleX) - MoveToolX*grid*zoom,GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleY),GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleZ) + MoveToolZ*grid*zoom,#PB_Absolute)
+            If g_EditMode = #mode_cut Or g_EditMode = #mode_chunksel_nodel Or g_EditMode = #mode_fill
+              If(toolBox\sx + Abs(MoveToolX)*grid*zoom >= grid And toolBox\sx + Abs(MoveToolX)*grid*zoom <= #maxSchemXZ*grid And toolBox\sz + Abs(MoveToolZ)*grid*zoom >= grid And toolBox\sz + Abs(MoveToolZ)*grid*zoom <= #maxSchemXZ*grid)
+                ScaleToolBlock(toolBox\sx + Abs(MoveToolX)*grid*zoom,toolBox\sy,toolBox\sz + Abs(MoveToolZ)*grid*zoom)
                 MoveNode(#ToolBlock,-0.25 *grid*zoom* MoveToolX,0,-0.25 *grid*zoom* MoveToolZ,#PB_Relative)
               EndIf
             EndIf
@@ -632,6 +614,17 @@ Repeat
             MoveNode(#ToolBlock,-0.5 *grid*zoom* MoveToolX,0,-0.5 *grid*zoom* MoveToolZ,#PB_Relative)
           EndIf
         EndIf
+        
+        MoveEntity(#Tool_origin,NodeX(#ToolBlock) + MoveToolX * toolBox\sx / 4  + MoveToolZ  * toolBox\sx / 4,NodeY(#ToolBlock) - toolBox\sy /4,NodeZ(#ToolBlock)  + MoveToolZ * toolBox\sz / 4  - MoveToolX  * toolBox\sz / 4,#PB_Absolute)
+        If (toolBox\sz * Abs(MoveToolX) + toolBox\sx * Abs(MoveToolZ)) < toolBox\sy
+          size.f = (toolBox\sz * Abs(MoveToolX) + toolBox\sx * Abs(MoveToolZ)) * 0.1
+        Else
+          size = toolBox\sy * 0.1
+        EndIf
+        ScaleEntity(#Tool_origin,size,size,size,#PB_Absolute)
+        MoveEntity(#ToolMouseover,NodeX(#ToolBlock) - MoveToolZ  * toolBox\sx * 0.085,NodeY(#ToolBlock) +  toolBox\sy * 0.085,NodeZ(#ToolBlock) + MoveToolX * toolBox\sz * 0.085,#PB_Absolute)
+        ScaleEntity(#ToolMouseover,Abs(MoveToolX) * toolBox\sx + Abs(MoveToolZ)  * toolBox\sz + 0.1, toolBox\sy * 1.34, Abs(MoveToolX) * toolBox\sz * 1.34 + Abs(MoveToolZ)  * toolBox\sx * 1.34 ,#PB_Absolute)
+        
       ElseIf g_EditMode = #mode_cut
         camZoom =  MouseWheel
         camShiftX = -MouseX * #CameraSpeed * 0.2
@@ -642,32 +635,43 @@ Repeat
         camRotY = -MouseY * #CameraSpeed * 0.2
       EndIf
     EndIf
-  Else  ;mouseover toolblock
+  ElseIf MouseCatch = #False ;mouseover toolblock
     cast = MouseRayCast(0, WindowMouseX(0), WindowMouseY(0),2)
     If(cast > 0)
       nx = NormalX()
       ny = NormalY()
       nz = NormalZ()
       If nz > 0
-        cast = 3
+        cast = 1
       ElseIf nz < 0
-        cast = 4
+        cast = 3
       ElseIf nx > 0
         cast = 2
       ElseIf nx < 0
-        cast = 1
+        cast = 4
       Else 
         cast = 0
       EndIf
       If(lastcast <> cast)
-        SetEntityMaterial(#ToolFaceBottom+lastcast,MaterialID(#ToolBlock))
+        RotateEntity(#ToolMouseover,0,90*cast,0)
         lastcast = cast
-        SetEntityMaterial(#ToolFaceBottom+cast,MaterialID(#ToolBlock_act))
+        HideEntity(#ToolMouseover,#False)
+        HideEntity(#Tool_origin,#False)
+        MoveEntity(#Tool_origin,NodeX(#ToolBlock) + nx * toolBox\sx / 4  + nz  * toolBox\sx / 4,NodeY(#ToolBlock) - toolBox\sy /4,NodeZ(#ToolBlock)  + nz * toolBox\sz / 4  - nx  * toolBox\sz / 4,#PB_Absolute)
         
+        If (toolBox\sz * Abs(MoveToolX) + toolBox\sx * Abs(MoveToolZ)) < toolBox\sy
+          size.f = (toolBox\sz * Abs(MoveToolX) + toolBox\sx * Abs(MoveToolZ)) * 0.1
+        Else
+          size = toolBox\sy * 0.1
+        EndIf
+        ScaleEntity(#Tool_origin,size,size,size,#PB_Absolute)
+        MoveEntity(#ToolMouseover,NodeX(#ToolBlock) - nz  * toolBox\sx * 0.085,NodeY(#ToolBlock) +  toolBox\sy * 0.085,NodeZ(#ToolBlock) + nx * toolBox\sz * 0.085,#PB_Absolute)
+        ScaleEntity(#ToolMouseover,Abs(nx) * toolBox\sx + Abs(nz)  * toolBox\sz + 0.1, toolBox\sy * 1.34, Abs(nx) * toolBox\sz * 1.34 + Abs(nz)  * toolBox\sx * 1.34 ,#PB_Absolute)
       EndIf
     Else
       If lastcast <> 0
-        SetEntityMaterial(#ToolFaceBottom+lastcast,MaterialID(#ToolBlock))
+        HideEntity(#ToolMouseover,#True)
+        HideEntity(#Tool_origin,#True)
         lastcast = 0
       EndIf
       lastcast = 0
@@ -719,9 +723,9 @@ Repeat
       ElseIf(g_EditMode = #mode_insert And KeyboardPushed(#PB_Key_LeftControl))
         KeyY = 0
         AccY = 0
-        SaveModifiedChunk(schBox\x1 + (schBox\sx-1)/4, schBox\y1 + (schBox\sy-1)/4, schBox\z1 + (schBox\sz-1)/4, g_schRotation)
+        SaveModifiedChunk(toolBox\x1 + (toolBox\sx-1)/4, toolBox\y1 + (toolBox\sy-1)/4, toolBox\z1 + (toolBox\sz-1)/4, g_schRotation)
         g_EditMode = #mode_normal
-        HideToolBlock(#True)
+        HideToolBlock()
         If IsStaticGeometry(schGeo\id)
           WorldShadows(g_Shadows)
           FreeStaticGeometry(schGeo\id)
@@ -782,17 +786,17 @@ Repeat
     If KeyboardReleased(#PB_Key_Return)
       While(WindowEvent())
       Wend
-      If SaveCyubeAreaToFile(NodeX(#ToolBlock), NodeY(#ToolBlock), NodeZ(#ToolBlock),Round(GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleX),#PB_Round_Down),Round(GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleY),#PB_Round_Down),Round(GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleZ),#PB_Round_Down))
+      If SaveCyubeAreaToFile(NodeX(#ToolBlock), NodeY(#ToolBlock), NodeZ(#ToolBlock), toolBox\sx, toolBox\sy, toolBox\sz)
         g_EditMode = #mode_normal
         ;ReleaseMouse(#False)
-        HideToolBlock(#True)
+        HideToolBlock()
       EndIf
     EndIf  
    ElseIf g_EditMode = #mode_insert
      If KeyboardReleased(#PB_Key_Return)
-       schBox\x1 = NodeX(#ToolBlock) - (schBox\sx-1)/4
-       schBox\y1 = NodeY(#ToolBlock) - (schBox\sy-1)/4
-       schBox\z1 = NodeZ(#ToolBlock) - (schBox\sz-1)/4
+       toolBox\x1 = NodeX(#ToolBlock) - (toolBox\sx-1)/4
+       toolBox\y1 = NodeY(#ToolBlock) - (toolBox\sy-1)/4
+       toolBox\z1 = NodeZ(#ToolBlock) - (toolBox\sz-1)/4
        g_UpdateSchGeo = 1 ;displayCYSchematic(g_SchematicFile, SchBlocks())
      ElseIf KeyboardReleased(#PB_Key_Z)
        RotSchem = 1
@@ -840,13 +844,18 @@ Repeat
           Delay(20)
         Wend
         RotateNode(#ToolBlock,0,0,0)
-        ScaleToolBlock(schBox\sx+0.03,schBox\sy+0.03,schBox\sz+0.03,#PB_Absolute)
+        ScaleToolBlock(toolBox\sx+0.03,toolBox\sy+0.03,toolBox\sz+0.03)
         CloseProgress(progH)
-       g_UpdateSchGeo = 1
-       ScaleToolBlock(schBox\sx+0.03,schBox\sy+0.03,schBox\sz+0.03,#PB_Absolute)
-       schBox\x1 = NodeX(#ToolBlock) - (schBox\sx-1)/4
-       schBox\y1 = NodeY(#ToolBlock) - (schBox\sy-1)/4
-       schBox\z1 = NodeZ(#ToolBlock) - (schBox\sz-1)/4
+        g_UpdateSchGeo = 1
+        If Mod(g_schRotation,2)
+          MoveNode(#ToolBlock,Round(2*(NodeX(#ToolBlock)-(toolBox\sx-1)*0.25),#PB_Round_Up)/2+(toolBox\sx-1)*0.25,NodeY(#ToolBlock),Round(2*(NodeZ(#ToolBlock)-(toolBox\sz-1)*0.25),#PB_Round_Up)/2+(toolBox\sz-1)*0.25,#PB_Absolute)
+        Else
+          MoveNode(#ToolBlock,Round(2*(NodeX(#ToolBlock)-(toolBox\sx-1)*0.25),#PB_Round_Down)/2+(toolBox\sx-1)*0.25,NodeY(#ToolBlock),Round(2*(NodeZ(#ToolBlock)-(toolBox\sz-1)*0.25),#PB_Round_Down)/2+(toolBox\sz-1)*0.25,#PB_Absolute)
+        EndIf
+        
+       toolBox\x1 = NodeX(#ToolBlock) - (toolBox\sx-1)/4
+       toolBox\y1 = NodeY(#ToolBlock) - (toolBox\sy-1)/4
+       toolBox\z1 = NodeZ(#ToolBlock) - (toolBox\sz-1)/4
      EndIf
      
    ElseIf g_EditMode = #mode_chunksel_nodel
@@ -862,7 +871,7 @@ Repeat
        Markers()\entity = CreateEntity(#PB_Any,MeshID(#FullBlock),MaterialID(#Marker_green),Markers()\x,200,Markers()\z)
        ScaleEntity(Markers()\entity,Markers()\sx,800,Markers()\sz,#PB_Absolute)
        g_EditMode = #mode_normal
-        HideToolBlock(#True)
+        HideToolBlock()
       EndIf  
     EndIf
   
@@ -879,11 +888,13 @@ Repeat
 
   EndIf
 
-;   If(event = #PB_Event_Gadget)
-;     If EventGadget() = #BlockListIcon
-;       If EventType() = #PB_EventType_LeftDoubleClick
+   If(event = #PB_Event_Gadget)
+     If EventGadget() = #BlockListIcon
+       If EventType() = #PB_EventType_LeftDoubleClick
 ;         
-;       ElseIf EventType() = #PB_EventType_LeftClick
+       ElseIf EventType() = #PB_EventType_LeftClick
+         SelectElement(BlockListIcon(),GetGadgetState(#BlockListIcon))
+         setToolBlocktype(BlockListIcon()\id,BlockListIcon()\cblock)
 ;         ResetList(BlockListIcon())
 ;         While NextElement(BlockListIcon())
 ;           If ListIndex(BlockListIcon()) = GetGadgetState(#BlockListIcon)
@@ -932,12 +943,9 @@ Repeat
 ;           
 ;         Wend
 ;         
-;       EndIf
-;     EndIf
-;   EndIf
-  
-      
-      
+       EndIf
+     EndIf
+   EndIf
       
   MouseX = 0
   MouseY = 0
@@ -986,8 +994,8 @@ End
 
 
 ; IDE Options = PureBasic 5.72 (Windows - x64)
-; CursorPosition = 10
-; Folding = -
+; CursorPosition = 365
+; FirstLine = 355
 ; EnableXP
 ; Executable = test.exe
 ; CPU = 1

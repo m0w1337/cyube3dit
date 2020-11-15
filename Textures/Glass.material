@@ -1,27 +1,222 @@
 material Glass
- {
-   technique
-   {
-     pass
-     {
-       scene_blend alpha_blend
-       depth_write off
-	   specular 0.8 0.8 1.0 128
-       
-       texture_unit
-       {
-         texture Glass.png
-         alpha_op_ex source1 src_manual src_texture 0.5   
-		specular 0.8 0.8 1.0 128		 
-       }
-	   texture_unit
+{
+	lod_values 60 120
+	technique one
+	{
+		lod_index 0
+		pass glass
+		{
+			transparency_casts_shadows off
+			scene_blend alpha_blend
+			depth_write off
+			specular 0.8 0.8 1.0 128
+			transparent_sorting off
+			texture_unit
+			{
+			 texture Glass.png
+			 alpha_op_ex source1 src_manual src_texture 0.5   		 
+			}
+			texture_unit
 			{
 				texture sphere.jpg
+				scale 0.8 0.8
 				colour_op_ex add src_texture src_current
 				colour_op_multipass_fallback one one
 				env_map spherical
-				specular 0.8 1.0 0.8 128
 			}
-     }
-   }
- }
+		}
+	}
+	technique two 
+	{
+		lod_index 1
+		pass transp
+		{
+			depth_write off
+			scene_blend alpha_blend 
+			transparent_sorting off
+			texture_unit
+			{
+				texture Glass_LOD.png	 
+			}
+		}
+	}
+	technique three
+	{
+		lod_index 2
+	}
+}
+
+material straws
+{
+	lod_values 60
+	technique one
+	{
+		lod_index 0
+		pass foilage
+		{
+			receive_shadows off
+			transparency_casts_shadows off
+			scene_blend alpha_blend
+			depth_write off
+			transparent_sorting off
+			texture_unit
+			{
+				texture straws.png 				 
+			}
+		}
+	}
+	technique two
+	{
+		lod_index 1
+	}
+}
+
+material flower1
+{
+	lod_values 60
+	technique one
+	{
+		lod_index 0
+		pass foilage
+		{
+			receive_shadows off
+			transparency_casts_shadows off
+			scene_blend alpha_blend
+			depth_write off
+			transparent_sorting off
+			texture_unit
+			{
+				texture flower1.png 				 
+			}
+		}
+	}
+	technique two
+	{
+		lod_index 1
+	}
+}
+material flower2
+{
+	lod_values 60
+	technique one
+	{
+		lod_index 0
+		pass foilage
+		{
+			receive_shadows off
+			transparency_casts_shadows off
+			scene_blend alpha_blend
+			depth_write off
+			transparent_sorting off
+			texture_unit
+			{
+				texture flower2.png 				 
+			}
+		}
+	}
+	technique two
+	{
+		lod_index 1
+	}
+}
+material flower3
+{
+	lod_values 60
+	technique one
+	{
+		lod_index 0
+		pass foilage
+		{
+			receive_shadows off
+			transparency_casts_shadows off
+			scene_blend alpha_blend
+			depth_write off
+			transparent_sorting off
+			texture_unit
+			{
+				texture flower3.png 				 
+			}
+		}
+	}
+	technique two
+	{
+		lod_index 1
+	}
+}
+material flower4
+{
+	lod_values 60
+	technique one
+	{
+		lod_index 0
+		pass foilage
+		{
+			receive_shadows off
+			transparency_casts_shadows off
+			scene_blend alpha_blend
+			depth_write off
+			transparent_sorting off
+			texture_unit
+			{
+				texture flower4.png 				 
+			}
+		}
+	}
+	technique two
+	{
+		lod_index 1
+	}
+}
+material Rainbowflower
+{
+	lod_values 60
+	technique one
+	{
+		lod_index 0
+		pass foilage
+		{
+			receive_shadows off
+			transparency_casts_shadows off
+			scene_blend alpha_blend
+			depth_write off
+			transparent_sorting off
+			texture_unit
+			{
+				texture Rainbowflower.png 				 
+			}
+		}
+	}
+	technique two 
+	{
+		lod_index 1
+	}
+}
+
+material Test
+{
+
+	technique one
+	{
+		lod_index 0
+		pass foilage
+		{
+			#ambient 0.3 0.3 0.3 1.0
+			#diffuse 0.3 0.3 0.3 1.0
+			#specular 1.0 1.0 1.0 1.0 128
+			#emissive 0.3 0.5 0.3 1.0
+			receive_shadows off
+			transparency_casts_shadows off
+			scene_blend alpha_blend
+			specular 0.8 0.8 1.0 128
+			depth_write off
+			transparent_sorting off
+			texture_unit
+			{
+				texture_alias texture1		
+				alpha_op_ex source1 src_manual src_texture 0.75   
+			}
+			
+		}
+	}
+	
+}

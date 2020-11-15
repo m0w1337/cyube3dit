@@ -1,6 +1,6 @@
 ﻿#BSubstWind = 10
 #BlockListIcon = 100
-#blockPrevSize = 32
+#blockPrevSize = 64
 
 #LineTop = 0
 #LineBottom = 1
@@ -14,9 +14,12 @@
 #FaceRight = 13
 #FaceFront = 14
 #FaceBack = 15
+#BillBoardMesh = 16
+
+
 
 #FullBlock = 306
-#BillBoardMesh = 16
+
 #ToolBlock = 1001
 #ToolBlock_act = 1002
 #ToolFaceTop = 1003
@@ -28,6 +31,15 @@
 #Marker_green = 1010
 #Marker_red = 1011
 
+#TopFillerMesh = 1017
+#BottomFillerMesh = 1018
+#LeftFillerMesh = 1019
+#RightFillerMesh = 1020
+#FrontFillerMesh = 1021
+#BackFillerMesh = 1022
+#FillerMesh = 1023
+#ToolMouseover = 1024
+#Tool_origin = 1025
 Structure pHnd
   wind.i
   progbar.i
@@ -39,6 +51,11 @@ Global BlockListIconIL = 0
 
 Declare  publishCustomBlock(db, id, mode, name.s, author.s)
 Declare  findCustomBlock(db,id, name.s)
+
+Declare  publishStdBlock(db, id, mode, name.s, author.s)
+Declare  findStdBlock(db,id, name.s)
+Declare  ScaleToolBlock(sx.f,sy.f,sz.f)
+
 
 Procedure.s GetLApplicationDataDirectory()
  Protected path$
@@ -256,46 +273,58 @@ Procedure generateBlockMeshes()
     CreateEntity(#BillBoardMesh,MeshID(#BillBoardMesh),MaterialID(#MATERIAL_BLACK))
     HideEntity(#BillBoardMesh,#True)
     CreateEntity(#FaceTop, MeshID(#FaceTop), MaterialID(#MATERIAL_BLACK))
-    ;HideEntity(#FaceTop,#True)
+    HideEntity(#FaceTop,#True)
     CreateEntity(#FaceBottom, MeshID(#FaceBottom), MaterialID(#MATERIAL_BLACK))
-    ;HideEntity(#FaceBottom,#True)
+    HideEntity(#FaceBottom,#True)
     CreateEntity(#FaceLeft, MeshID(#FaceLeft), MaterialID(#MATERIAL_BLACK))
-    ;HideEntity(#FaceLeft,#True)
+    HideEntity(#FaceLeft,#True)
     CreateEntity(#FaceRight, MeshID(#FaceRight), MaterialID(#MATERIAL_BLACK))
-    ;HideEntity(#FaceRight,#True)
+    HideEntity(#FaceRight,#True)
     CreateEntity(#FaceFront, MeshID(#FaceFront), MaterialID(#MATERIAL_BLACK))
-    ;HideEntity(#FaceFront,#True)
+    HideEntity(#FaceFront,#True)
     CreateEntity(#FaceBack, MeshID(#FaceBack), MaterialID(#MATERIAL_BLACK))
-    ;HideEntity(#FaceBack,#True)
+    HideEntity(#FaceBack,#True)
     CreateEntity(#FullBlock, MeshID(#FullBlock), MaterialID(#MATERIAL_BLACK))
     HideEntity(#FullBlock,#True)
     
   EndProcedure
   
   
-  Procedure ScaleToolBlock(x.f,y.f,z.f,mode)
-    ScaleEntity(#ToolFaceTop,x,y,z,mode)
-    ScaleEntity(#ToolFaceBottom,x,y,z,mode)
-    ScaleEntity(#ToolFaceLeft,x,y,z,mode)
-    ScaleEntity(#ToolFaceRight,x,y,z,mode)
-    ScaleEntity(#ToolFaceFront,x,y,z,mode)
-    ScaleEntity(#ToolFaceBack,x,y,z,mode)
-;     StartDrawing(TextureOutput(#ToolBlock))
-;     DrawingFont(FontID(1))
-;     DrawingMode(#PB_2DDrawing_AlphaChannel )
-;     Box(0,0,256,256,RGBA(100,255,100,0))
-;     DrawingMode(#PB_2DDrawing_Transparent|#PB_2DDrawing_AlphaBlend )
-;     DrawText(10,10,Str(x)+"x"+Str(y)+"x"+Str(z),RGBA(0,0,0,255))
-;     StopDrawing()
-  EndProcedure
+;   Procedure ScaleToolBlock(x.f,y.f,z.f,mode)
+;     ScaleEntity(#ToolFaceTop,x,y,z,mode)
+;     ScaleEntity(#ToolFaceBottom,x,y,z,mode)
+;     ScaleEntity(#ToolFaceLeft,x,y,z,mode)
+;     ScaleEntity(#ToolFaceRight,x,y,z,mode)
+;     ScaleEntity(#ToolFaceFront,x,y,z,mode)
+;     ScaleEntity(#ToolFaceBack,x,y,z,mode)
+; ;     StartDrawing(TextureOutput(#ToolBlock))
+; ;     DrawingFont(FontID(1))
+; ;     DrawingMode(#PB_2DDrawing_AlphaChannel )
+; ;     Box(0,0,256,256,RGBA(100,255,100,0))
+; ;     DrawingMode(#PB_2DDrawing_Transparent|#PB_2DDrawing_AlphaBlend )
+; ;     DrawText(10,10,Str(x)+"x"+Str(y)+"x"+Str(z),RGBA(0,0,0,255))
+; ;     StopDrawing()
+;   EndProcedure
   
-    Procedure HideToolBlock(mode)
-    HideEntity(#ToolFaceTop,mode)
-    HideEntity(#ToolFaceBottom,mode)
-    HideEntity(#ToolFaceLeft,mode)
-    HideEntity(#ToolFaceRight,mode)
-    HideEntity(#ToolFaceFront,mode)
-    HideEntity(#ToolFaceBack,mode)
+  Procedure HideToolBlock()
+    If IsEntity(#TopFillerMesh)
+      FreeEntity(#TopFillerMesh)
+    EndIf
+    If IsEntity(#BottomFillerMesh)
+      FreeEntity(#BottomFillerMesh)
+    EndIf
+    If IsEntity(#LeftFillerMesh)
+      FreeEntity(#LeftFillerMesh)
+    EndIf
+    If IsEntity(#RightFillerMesh)
+      FreeEntity(#RightFillerMesh)
+    EndIf
+    If IsEntity(#FrontFillerMesh)
+      FreeEntity(#FrontFillerMesh)
+    EndIf
+    If IsEntity(#BackFillerMesh)
+      FreeEntity(#BackFillerMesh)
+    EndIf
   EndProcedure
   
   
@@ -445,10 +474,12 @@ EndProcedure
 
 Procedure SaveBlockPreview(BlockID, CBlockID, noUpload,CBauthor.s)
   draw = 0
+  WorldShadows(#PB_Shadow_Modulative,30,RGB(200,210,230))
   If(BlockID = 66)
     If FindMapElement(CBlocks(),Str(CBlockID))
       HideEntity(#FaceTop,#False)
       HideEntity(#FaceBottom,#False)
+      HideEntity(#FaceLeft,#False)
       HideEntity(#FaceLeft,#False)
       HideEntity(#FaceRight,#False)
       HideEntity(#FaceFront,#False)
@@ -456,36 +487,36 @@ Procedure SaveBlockPreview(BlockID, CBlockID, noUpload,CBauthor.s)
       HideEntity(#BillBoardMesh,#True)
       Select CBlocks()\mode
         Case 1:
-          SetEntityMaterial(#FaceTop,MaterialID(CBlocks()\tex(#texInd_all)))
-          SetEntityMaterial(#FaceBottom,MaterialID(CBlocks()\tex(#texInd_all)))
-          SetEntityMaterial(#FaceLeft,MaterialID(CBlocks()\tex(#texInd_all)))
-          SetEntityMaterial(#FaceRight,MaterialID(CBlocks()\tex(#texInd_all)))
-          SetEntityMaterial(#FaceFront,MaterialID(CBlocks()\tex(#texInd_all)))
-          SetEntityMaterial(#FaceBack,MaterialID(CBlocks()\tex(#texInd_all)))
+          SetEntityMaterial(#FaceTop,MaterialID(CBlocks()\mat(#texInd_all)))
+          SetEntityMaterial(#FaceBottom,MaterialID(CBlocks()\mat(#texInd_all)))
+          SetEntityMaterial(#FaceLeft,MaterialID(CBlocks()\mat(#texInd_all)))
+          SetEntityMaterial(#FaceRight,MaterialID(CBlocks()\mat(#texInd_all)))
+          SetEntityMaterial(#FaceFront,MaterialID(CBlocks()\mat(#texInd_all)))
+          SetEntityMaterial(#FaceBack,MaterialID(CBlocks()\mat(#texInd_all)))
           draw = 1
         Case 2:
-          SetEntityMaterial(#FaceTop,MaterialID(CBlocks()\tex(#texInd_upDown)))
-          SetEntityMaterial(#FaceBottom,MaterialID(CBlocks()\tex(#texInd_upDown)))
-          SetEntityMaterial(#FaceLeft,MaterialID(CBlocks()\tex(#texInd_sides)))
-          SetEntityMaterial(#FaceRight,MaterialID(CBlocks()\tex(#texInd_sides)))
-          SetEntityMaterial(#FaceFront,MaterialID(CBlocks()\tex(#texInd_sides)))
-          SetEntityMaterial(#FaceBack,MaterialID(CBlocks()\tex(#texInd_sides)))
+          SetEntityMaterial(#FaceTop,MaterialID(CBlocks()\mat(#texInd_upDown)))
+          SetEntityMaterial(#FaceBottom,MaterialID(CBlocks()\mat(#texInd_upDown)))
+          SetEntityMaterial(#FaceLeft,MaterialID(CBlocks()\mat(#texInd_sides)))
+          SetEntityMaterial(#FaceRight,MaterialID(CBlocks()\mat(#texInd_sides)))
+          SetEntityMaterial(#FaceFront,MaterialID(CBlocks()\mat(#texInd_sides)))
+          SetEntityMaterial(#FaceBack,MaterialID(CBlocks()\mat(#texInd_sides)))
           draw = 1
         Case 3:
-          SetEntityMaterial(#FaceTop,MaterialID(CBlocks()\tex(#texInd_top)))
-          SetEntityMaterial(#FaceBottom,MaterialID(CBlocks()\tex(#texInd_bottom)))
-          SetEntityMaterial(#FaceLeft,MaterialID(CBlocks()\tex(#texInd_sides)))
-          SetEntityMaterial(#FaceRight,MaterialID(CBlocks()\tex(#texInd_sides)))
-          SetEntityMaterial(#FaceFront,MaterialID(CBlocks()\tex(#texInd_sides)))
-          SetEntityMaterial(#FaceBack,MaterialID(CBlocks()\tex(#texInd_sides)))
+          SetEntityMaterial(#FaceTop,MaterialID(CBlocks()\mat(#texInd_top)))
+          SetEntityMaterial(#FaceBottom,MaterialID(CBlocks()\mat(#texInd_bottom)))
+          SetEntityMaterial(#FaceLeft,MaterialID(CBlocks()\mat(#texInd_sides)))
+          SetEntityMaterial(#FaceRight,MaterialID(CBlocks()\mat(#texInd_sides)))
+          SetEntityMaterial(#FaceFront,MaterialID(CBlocks()\mat(#texInd_sides)))
+          SetEntityMaterial(#FaceBack,MaterialID(CBlocks()\mat(#texInd_sides)))
           draw = 1
         Case 4:
-          SetEntityMaterial(#FaceTop,MaterialID(CBlocks()\tex(#texInd_top)))
-          SetEntityMaterial(#FaceBottom,MaterialID(CBlocks()\tex(#texInd_bottom)))
-          SetEntityMaterial(#FaceLeft,MaterialID(CBlocks()\tex(#texInd_left)))
-          SetEntityMaterial(#FaceRight,MaterialID(CBlocks()\tex(#texInd_right)))
-          SetEntityMaterial(#FaceFront,MaterialID(CBlocks()\tex(#texInd_front)))
-          SetEntityMaterial(#FaceBack,MaterialID(CBlocks()\tex(#texInd_back)))
+          SetEntityMaterial(#FaceTop,MaterialID(CBlocks()\mat(#texInd_top)))
+          SetEntityMaterial(#FaceBottom,MaterialID(CBlocks()\mat(#texInd_bottom)))
+          SetEntityMaterial(#FaceLeft,MaterialID(CBlocks()\mat(#texInd_left)))
+          SetEntityMaterial(#FaceRight,MaterialID(CBlocks()\mat(#texInd_right)))
+          SetEntityMaterial(#FaceFront,MaterialID(CBlocks()\mat(#texInd_front)))
+          SetEntityMaterial(#FaceBack,MaterialID(CBlocks()\mat(#texInd_back)))
           draw = 1
       EndSelect
     Else
@@ -513,54 +544,55 @@ Procedure SaveBlockPreview(BlockID, CBlockID, noUpload,CBauthor.s)
       
       Select SBlocks(BlockID)\mode
         Case 1:
-          If IsMaterial(SBlocks(BlockID)\tex(#texInd_all))
-            SetEntityMaterial(#FaceTop,MaterialID(SBlocks(BlockID)\tex(#texInd_all)))
-            SetEntityMaterial(#FaceBottom,MaterialID(SBlocks(BlockID)\tex(#texInd_all)))
-            SetEntityMaterial(#FaceLeft,MaterialID(SBlocks(BlockID)\tex(#texInd_all)))
-            SetEntityMaterial(#FaceRight,MaterialID(SBlocks(BlockID)\tex(#texInd_all)))
-            SetEntityMaterial(#FaceFront,MaterialID(SBlocks(BlockID)\tex(#texInd_all)))
-            SetEntityMaterial(#FaceBack,MaterialID(SBlocks(BlockID)\tex(#texInd_all)))
+          If IsMaterial(SBlocks(BlockID)\mat(#texInd_all))
+            SetEntityMaterial(#FaceTop,MaterialID(SBlocks(BlockID)\mat(#texInd_all)))
+            SetEntityMaterial(#FaceBottom,MaterialID(SBlocks(BlockID)\mat(#texInd_all)))
+            SetEntityMaterial(#FaceLeft,MaterialID(SBlocks(BlockID)\mat(#texInd_all)))
+            SetEntityMaterial(#FaceRight,MaterialID(SBlocks(BlockID)\mat(#texInd_all)))
+            SetEntityMaterial(#FaceFront,MaterialID(SBlocks(BlockID)\mat(#texInd_all)))
+            SetEntityMaterial(#FaceBack,MaterialID(SBlocks(BlockID)\mat(#texInd_all)))
             draw = 1
           EndIf
         Case 2:
-          If IsMaterial(SBlocks(BlockID)\tex(#texInd_upDown))
-            SetEntityMaterial(#FaceTop,MaterialID(SBlocks(BlockID)\tex(#texInd_upDown)))
-            SetEntityMaterial(#FaceBottom,MaterialID(SBlocks(BlockID)\tex(#texInd_upDown)))
+          If IsMaterial(SBlocks(BlockID)\mat(#texInd_upDown))
+            SetEntityMaterial(#FaceTop,MaterialID(SBlocks(BlockID)\mat(#texInd_upDown)))
+            SetEntityMaterial(#FaceBottom,MaterialID(SBlocks(BlockID)\mat(#texInd_upDown)))
           EndIf
-          If IsMaterial(SBlocks(BlockID)\tex(#texInd_sides))
-            SetEntityMaterial(#FaceLeft,MaterialID(SBlocks(BlockID)\tex(#texInd_sides)))
-            SetEntityMaterial(#FaceRight,MaterialID(SBlocks(BlockID)\tex(#texInd_sides)))
-            SetEntityMaterial(#FaceFront,MaterialID(SBlocks(BlockID)\tex(#texInd_sides)))
-            SetEntityMaterial(#FaceBack,MaterialID(SBlocks(BlockID)\tex(#texInd_sides)))
+          If IsMaterial(SBlocks(BlockID)\mat(#texInd_sides))
+            SetEntityMaterial(#FaceLeft,MaterialID(SBlocks(BlockID)\mat(#texInd_sides)))
+            SetEntityMaterial(#FaceRight,MaterialID(SBlocks(BlockID)\mat(#texInd_sides)))
+            SetEntityMaterial(#FaceFront,MaterialID(SBlocks(BlockID)\mat(#texInd_sides)))
+            SetEntityMaterial(#FaceBack,MaterialID(SBlocks(BlockID)\mat(#texInd_sides)))
             draw = 1
           EndIf
         Case 3:
-          If IsMaterial(SBlocks(BlockID)\tex(#texInd_upDown))
-            SetEntityMaterial(#FaceTop,MaterialID(SBlocks(BlockID)\tex(#texInd_top)))
+          If IsMaterial(SBlocks(BlockID)\mat(#texInd_upDown))
+            SetEntityMaterial(#FaceTop,MaterialID(SBlocks(BlockID)\mat(#texInd_top)))
           EndIf
-          If IsMaterial(SBlocks(BlockID)\tex(#texInd_upDown))
-            SetEntityMaterial(#FaceBottom,MaterialID(SBlocks(BlockID)\tex(#texInd_bottom)))
+          If IsMaterial(SBlocks(BlockID)\mat(#texInd_upDown))
+            SetEntityMaterial(#FaceBottom,MaterialID(SBlocks(BlockID)\mat(#texInd_bottom)))
           EndIf
-          If IsMaterial(SBlocks(BlockID)\tex(#texInd_sides))
-            SetEntityMaterial(#FaceLeft,MaterialID(SBlocks(BlockID)\tex(#texInd_sides)))
-            SetEntityMaterial(#FaceRight,MaterialID(SBlocks(BlockID)\tex(#texInd_sides)))
-            SetEntityMaterial(#FaceFront,MaterialID(SBlocks(BlockID)\tex(#texInd_sides)))
-            SetEntityMaterial(#FaceBack,MaterialID(SBlocks(BlockID)\tex(#texInd_sides)))
+          If IsMaterial(SBlocks(BlockID)\mat(#texInd_sides))
+            SetEntityMaterial(#FaceLeft,MaterialID(SBlocks(BlockID)\mat(#texInd_sides)))
+            SetEntityMaterial(#FaceRight,MaterialID(SBlocks(BlockID)\mat(#texInd_sides)))
+            SetEntityMaterial(#FaceFront,MaterialID(SBlocks(BlockID)\mat(#texInd_sides)))
+            SetEntityMaterial(#FaceBack,MaterialID(SBlocks(BlockID)\mat(#texInd_sides)))
             draw = 1
           EndIf
         Case 4:
-          If IsMaterial(SBlocks(BlockID)\tex(#texInd_top)) And IsMaterial(SBlocks(BlockID)\tex(#texInd_bottom)) And IsMaterial(SBlocks(BlockID)\tex(#texInd_left)) And IsMaterial(SBlocks(BlockID)\tex(#texInd_right)) And IsMaterial(SBlocks(BlockID)\tex(#texInd_front)) And IsMaterial(SBlocks(BlockID)\tex(#texInd_back))
-            SetEntityMaterial(#FaceTop,MaterialID(SBlocks(BlockID)\tex(#texInd_top)))
-            SetEntityMaterial(#FaceBottom,MaterialID(SBlocks(BlockID)\tex(#texInd_bottom)))
-            SetEntityMaterial(#FaceLeft,MaterialID(SBlocks(BlockID)\tex(#texInd_left)))
-            SetEntityMaterial(#FaceRight,MaterialID(SBlocks(BlockID)\tex(#texInd_right)))
-            SetEntityMaterial(#FaceFront,MaterialID(SBlocks(BlockID)\tex(#texInd_front)))
-            SetEntityMaterial(#FaceBack,MaterialID(SBlocks(BlockID)\tex(#texInd_back)))
+          If IsMaterial(SBlocks(BlockID)\mat(#texInd_top)) And IsMaterial(SBlocks(BlockID)\mat(#texInd_bottom)) And IsMaterial(SBlocks(BlockID)\mat(#texInd_left)) And IsMaterial(SBlocks(BlockID)\mat(#texInd_right)) And IsMaterial(SBlocks(BlockID)\mat(#texInd_front)) And IsMaterial(SBlocks(BlockID)\mat(#texInd_back))
+            SetEntityMaterial(#FaceTop,MaterialID(SBlocks(BlockID)\mat(#texInd_top)))
+            SetEntityMaterial(#FaceBottom,MaterialID(SBlocks(BlockID)\mat(#texInd_bottom)))
+            SetEntityMaterial(#FaceLeft,MaterialID(SBlocks(BlockID)\mat(#texInd_left)))
+            SetEntityMaterial(#FaceRight,MaterialID(SBlocks(BlockID)\mat(#texInd_right)))
+            SetEntityMaterial(#FaceFront,MaterialID(SBlocks(BlockID)\mat(#texInd_front)))
+            SetEntityMaterial(#FaceBack,MaterialID(SBlocks(BlockID)\mat(#texInd_back)))
             draw = 1
           EndIf
         Case 5:
-          If IsMaterial(SBlocks(BlockID)\tex(#texInd_top))
-            SetEntityMaterial(#BillBoardMesh,MaterialID(SBlocks(BlockID)\tex(#texInd_all)))
+          If IsMaterial(SBlocks(BlockID)\mat(#texInd_top))
+            WorldShadows(#PB_Shadow_None)
+            SetEntityMaterial(#BillBoardMesh,MaterialID(SBlocks(BlockID)\mat(#texInd_all)))
             draw = 1
           EndIf
           
@@ -594,20 +626,26 @@ Procedure SaveBlockPreview(BlockID, CBlockID, noUpload,CBauthor.s)
       If Not findCustomBlock(g_CBlockDB,CBlocks()\id,CBlocks()\name) Or g_ForceUpdate
         publishCustomBlock(g_CBlockDB,CBlocks()\id,CBlocks()\mode,CBlocks()\name,CBauthor.s)
       EndIf
+CompilerIf #PB_Compiler_Debugger
+    ElseIf BlockID <> 66
+      If Not findStdBlock(g_CBlockDB,BlockID,SBlocks(blockID)\name) Or g_ForceUpdate
+        publishStdBlock(g_CBlockDB,BlockID,SBlocks(blockID)\mode,SBlocks(blockID)\name, "Stonebrick Studios")
+      EndIf
+CompilerEndIf
     EndIf 
   EndIf
   
 EndProcedure
 
 ;>>>>>>>>>>>>>>>>>>>> BUG GetScriptMaterial <<<<<<<<<<<<<<<<<<<<
-Procedure.i GetScriptMaterial_(material.i,name.s)
-  Protected m,mtemp=GetScriptMaterial(-1,name)
-  m=CopyMaterial(mtemp,material)
-  If material=-1:material=m:EndIf
-  FreeMaterial(mtemp)
-  ProcedureReturn material
-EndProcedure
-Macro GetScriptMaterial(material,name):GetScriptMaterial_(material,name):EndMacro
+; Procedure.i GetScriptMaterial_(material.i,name.s)
+;   Protected m,mtemp=GetScriptMaterial(-1,name)
+;   m=CopyMaterial(mtemp,material)
+;   If material=-1:material=m:EndIf
+;   FreeMaterial(mtemp)
+;   ProcedureReturn material
+; EndProcedure
+; Macro GetScriptMaterial(material,name):GetScriptMaterial_(material,name):EndMacro
 
 Procedure LoadBlocks(Array blockArr.SBlocks(1), Map ABlockMap.SBlocks())
   StatusBarText(0,0,"Loading Blocks, please wait...")
@@ -616,6 +654,7 @@ Procedure LoadBlocks(Array blockArr.SBlocks(1), Map ABlockMap.SBlocks())
   For i=0 To 255
     For ii = 0 To 5
       blockArr(i)\tex(ii) = i
+      blockArr(i)\mat(ii) = i
     Next
   Next
   ClearMap(ABlockMap())
@@ -628,6 +667,7 @@ Procedure LoadBlocks(Array blockArr.SBlocks(1), Map ABlockMap.SBlocks())
           lastDate = 0
           For i=0 To 5
             currBlock\tex(i) = 0
+            currBlock\mat(i) = 0
           Next
           currBlock\name = GetXMLNodeText(*ChildNode)
           ExamineXMLAttributes(*ChildNode)
@@ -647,12 +687,14 @@ Procedure LoadBlocks(Array blockArr.SBlocks(1), Map ABlockMap.SBlocks())
                   lastDate = date
                 EndIf
                 If GetExtensionPart(XMLAttributeValue(*ChildNode)) = "material"
-                   currBlock\tex(0) = GetScriptMaterial(#PB_Any,GetFilePart(XMLAttributeValue(*ChildNode),#PB_FileSystem_NoExtension))
+                  currBlock\tex(0) = LoadTexture(#PB_Any, GetFilePart(XMLAttributeValue(*ChildNode),#PB_FileSystem_NoExtension)+".png")
+                   currBlock\mat(0) = GetScriptMaterial(#PB_Any,GetFilePart(XMLAttributeValue(*ChildNode),#PB_FileSystem_NoExtension))
                 Else
                   currBlock\tex(0) = LoadTexture(#PB_Any,XMLAttributeValue(*ChildNode))
                   If currBlock\tex(0)
-                    currBlock\tex(0) = CreateMaterial(#PB_Any,TextureID(currBlock\tex(0)))
-                    MaterialCullingMode(currBlock\tex(0),#PB_Material_NoCulling)
+                    currBlock\mat(0) = CreateMaterial(#PB_Any,TextureID(currBlock\tex(0)))
+                    MaterialCullingMode(currBlock\mat(0),#PB_Material_NoCulling)
+                    MaterialShadingMode(currBlock\mat(0),#PB_Material_Flat)
                   EndIf
                 EndIf
                 
@@ -662,8 +704,9 @@ Procedure LoadBlocks(Array blockArr.SBlocks(1), Map ABlockMap.SBlocks())
                   DrawingMode(#PB_2DDrawing_AlphaBlend)
                   DrawTextEx(1,1,"Texture missing:"+#CRLF$+XMLAttributeValue(*ChildNode))
                   StopDrawing()
-                  currBlock\tex(0) = CreateMaterial(#PB_Any,TextureID(currBlock\tex(0)))
-                  MaterialCullingMode(currBlock\tex(0),#PB_Material_NoCulling)
+                  currBlock\mat(0) = CreateMaterial(#PB_Any,TextureID(currBlock\tex(0)))
+                  MaterialCullingMode(currBlock\mat(0),#PB_Material_NoCulling)
+                  MaterialShadingMode(currBlock\mat(0),#PB_Material_Flat)
                 EndIf
                 
               Case "texture1":
@@ -679,8 +722,9 @@ Procedure LoadBlocks(Array blockArr.SBlocks(1), Map ABlockMap.SBlocks())
                   DrawTextEx(1,1,"Texture missing:"+#CRLF$+XMLAttributeValue(*ChildNode))
                   StopDrawing()
                 EndIf
-                currBlock\tex(1) = CreateMaterial(#PB_Any,TextureID(currBlock\tex(1)))
-                MaterialCullingMode(currBlock\tex(1),#PB_Material_NoCulling)
+                currBlock\mat(1) = CreateMaterial(#PB_Any,TextureID(currBlock\tex(1)))
+                MaterialCullingMode(currBlock\mat(1),#PB_Material_NoCulling)
+                MaterialShadingMode(currBlock\mat(1),#PB_Material_Flat)
               Case "texture2":
                 date = GetFileDate(".\Textures\"+XMLAttributeValue(*ChildNode), #PB_Date_Modified)
                 If date > lastDate
@@ -697,8 +741,9 @@ Procedure LoadBlocks(Array blockArr.SBlocks(1), Map ABlockMap.SBlocks())
                     MessageRequester("","Drawing failed!")
                   EndIf
                 EndIf
-                currBlock\tex(2) = CreateMaterial(#PB_Any,TextureID(currBlock\tex(2)))
-                MaterialCullingMode(currBlock\tex(2),#PB_Material_NoCulling)
+                currBlock\mat(2) = CreateMaterial(#PB_Any,TextureID(currBlock\tex(2)))
+                MaterialCullingMode(currBlock\mat(2),#PB_Material_NoCulling)
+                MaterialShadingMode(currBlock\mat(2),#PB_Material_Flat)
               Case "texture3":
                 date = GetFileDate(".\Textures\"+XMLAttributeValue(*ChildNode), #PB_Date_Modified)
                 If date > lastDate
@@ -712,8 +757,9 @@ Procedure LoadBlocks(Array blockArr.SBlocks(1), Map ABlockMap.SBlocks())
                   DrawTextEx(1,1,"Texture missing:"+#CRLF$+XMLAttributeValue(*ChildNode))
                   StopDrawing()
                 EndIf
-                currBlock\tex(3) = CreateMaterial(#PB_Any,TextureID(currBlock\tex(3)))
-                MaterialCullingMode(currBlock\tex(3),#PB_Material_NoCulling)
+                currBlock\mat(3) = CreateMaterial(#PB_Any,TextureID(currBlock\tex(3)))
+                MaterialCullingMode(currBlock\mat(3),#PB_Material_NoCulling)
+                MaterialShadingMode(currBlock\mat(3),#PB_Material_Flat)
               Case "texture4":
                 date = GetFileDate(".\Textures\"+XMLAttributeValue(*ChildNode), #PB_Date_Modified)
                 If date > lastDate
@@ -727,8 +773,9 @@ Procedure LoadBlocks(Array blockArr.SBlocks(1), Map ABlockMap.SBlocks())
                   DrawTextEx(1,1,"Texture missing:"+#CRLF$+XMLAttributeValue(*ChildNode))
                   StopDrawing()
                 EndIf
-                currBlock\tex(4) = CreateMaterial(#PB_Any,TextureID(currBlock\tex(4)))
-                MaterialCullingMode(currBlock\tex(4),#PB_Material_NoCulling)
+                currBlock\mat(4) = CreateMaterial(#PB_Any,TextureID(currBlock\tex(4)))
+                MaterialCullingMode(currBlock\mat(4),#PB_Material_NoCulling)
+                MaterialShadingMode(currBlock\mat(4),#PB_Material_Flat)
               Case "texture5":
                 date = GetFileDate(".\Textures\"+XMLAttributeValue(*ChildNode), #PB_Date_Modified)
                 If date > lastDate
@@ -742,8 +789,9 @@ Procedure LoadBlocks(Array blockArr.SBlocks(1), Map ABlockMap.SBlocks())
                   DrawTextEx(1,1,"Texture missing:"+#CRLF$+XMLAttributeValue(*ChildNode))
                   StopDrawing()
                 EndIf
-                currBlock\tex(5) = CreateMaterial(#PB_Any,TextureID(currBlock\tex(5)))
-                MaterialCullingMode(currBlock\tex(5),#PB_Material_NoCulling)
+                currBlock\mat(5) = CreateMaterial(#PB_Any,TextureID(currBlock\tex(5)))
+                MaterialCullingMode(currBlock\mat(5),#PB_Material_NoCulling)
+                MaterialShadingMode(currBlock\mat(5),#PB_Material_Flat)
             EndSelect
           Wend
           blockArr(currBlock\id)\type = #BLOCKTYPE_NORMAL
@@ -751,22 +799,22 @@ Procedure LoadBlocks(Array blockArr.SBlocks(1), Map ABlockMap.SBlocks())
           blockArr(currBlock\id)\name = currBlock\name
           For i=0 To 5
             blockArr(currBlock\id)\tex(i) = currBlock\tex(i)
+            blockArr(currBlock\id)\mat(i) = currBlock\mat(i)
           Next
           If(GetXMLNodeName(*ChildNode) = "AlphaBlock" And currBlock\mode < 6)  ;add only billboards And blocks, no meshes
             ABlockMap(Str(currBlock\id))\mode = currBlock\mode
             ABlockMap()\name = currBlock\name
             For i=0 To 5
               ABlockMap()\tex(i) = currBlock\tex(i)
-              If ABlockMap()\tex(i) 
-                MaterialBlendingMode(ABlockMap()\tex(i), #PB_Material_AlphaBlend)
-                ;MaterialShadingMode(ABlockMap()\tex(i),#PB_Material_Phong | #PB_Material_Solid)
-                ;MaterialShininess(ABlockMap()\tex(i), 999999999999999)
-                ;SetMaterialColor(ABlockMap()\tex(i),#PB_Material_SpecularColor,RGBA(255,0,0,255))
-                ;DisableMaterialLighting(ABlockMap()\tex(i),#True)
+              ABlockMap()\mat(i) = currBlock\mat(i)
+              If ABlockMap()\mat(i) 
+                MaterialBlendingMode(ABlockMap()\mat(i), #PB_Material_AlphaBlend)
               EndIf
             Next
             If(currBlock\mode = 5)
               blockArr(currBlock\id)\type = #BLOCKTYPE_BILLBOARD
+              MaterialCullingMode(ABlockMap()\mat(0),#PB_Material_NoCulling)
+              MaterialShadingMode(currBlock\mat(0),#PB_Material_Flat)
             Else
               If(currBlock\tex(0))
                 blockArr(currBlock\id)\type = #BLOCKTYPE_ALPHA
@@ -783,7 +831,7 @@ Procedure LoadBlocks(Array blockArr.SBlocks(1), Map ABlockMap.SBlocks())
                 blockArr(currBlock\id)\type = #BLOCKTYPE_ALPHA
               Else
                 TransformMesh(blockArr(currBlock\id)\mesh, 0.03, -0.36, 0, 0.02, 0.02, 0.02, -90, 90, 0)
-                blockArr(currBlock\id)\mesh = CreateEntity(#PB_Any,MeshID(blockArr(currBlock\id)\mesh),MaterialID(blockArr(currBlock\id)\tex(0)))
+                blockArr(currBlock\id)\mesh = CreateEntity(#PB_Any,MeshID(blockArr(currBlock\id)\mesh),MaterialID(blockArr(currBlock\id)\mat(0)))
                 blockArr(currBlock\id)\type = #BLOCKTYPE_TORCH
               EndIf
               
@@ -796,8 +844,9 @@ Procedure LoadBlocks(Array blockArr.SBlocks(1), Map ABlockMap.SBlocks())
               update = 0
             EndIf
           EndIf
-          If update
+          If update Or g_ForceUpdate
             SaveBlockPreview(currBlock\id, 0, 0,"")
+            
           EndIf
           *ChildNode = NextXMLNode(*ChildNode)
         Wend  
@@ -827,14 +876,15 @@ Procedure MoveStart(*playerpos.pos)
   EndIf
   
   If IsLight(1)
-    MoveLight(1,*playerpos\x+300, *playerpos\z+400, *playerpos\y+200)
+    ;MoveLight(1,*playerpos\x+300, *playerpos\z+400, *playerpos\y+200)
+    FreeLight(1)
   Else
-    CreateLight(1, RGB(205, 200, 155),*playerpos\x+300, *playerpos\z+400, *playerpos\y+200)
+    ;CreateLight(1, RGB(205, 200, 155),*playerpos\x+300, *playerpos\z+400, *playerpos\y+200)
   EndIf
   SetLightColor(0,#PB_Light_DiffuseColor,RGB(205, 200, 155))
   SetLightColor(0,#PB_Light_SpecularColor,RGBA(255, 255, 255,255))
-  SetLightColor(1,#PB_Light_DiffuseColor,RGB(205, 200, 155))
-  SetLightColor(1,#PB_Light_SpecularColor,RGBA(255, 255, 255,255))
+  ;SetLightColor(1,#PB_Light_DiffuseColor,RGB(205, 200, 155))
+  ;SetLightColor(1,#PB_Light_SpecularColor,RGBA(255, 255, 255,255))
   MoveCamera(0, *playerpos\x, *playerpos\z, *playerpos\y, #PB_Absolute)
   CameraLookAt(0, *playerpos\x+10, *playerpos\z, *playerpos\y)
 EndProcedure
@@ -850,11 +900,11 @@ Procedure SetMaterialCulling()
         MaterialCullingMode(i,#PB_Material_ClockWiseCull)
       EndIf
       For ii = 0 To 5
-        If IsMaterial(SBlocks(i)\tex(ii))
+        If IsMaterial(SBlocks(i)\mat(ii))
           If SBlocks(i)\type = #BLOCKTYPE_BILLBOARD
-            MaterialCullingMode(SBlocks(i)\tex(ii),#PB_Material_NoCulling)
+            MaterialCullingMode(SBlocks(i)\mat(ii),#PB_Material_NoCulling)
           Else
-            MaterialCullingMode(SBlocks(i)\tex(ii),#PB_Material_ClockWiseCull)
+            MaterialCullingMode(SBlocks(i)\mat(ii),#PB_Material_ClockWiseCull)
           EndIf
           
         EndIf
@@ -862,8 +912,8 @@ Procedure SetMaterialCulling()
     Next
     While(NextMapElement(CBlocks()))
       For ii = 0 To 5
-        If IsMaterial(CBlocks()\tex(ii))
-          MaterialCullingMode(CBlocks()\tex(ii),#PB_Material_ClockWiseCull)
+        If IsMaterial(CBlocks()\mat(ii))
+          MaterialCullingMode(CBlocks()\mat(ii),#PB_Material_ClockWiseCull)
         EndIf
       Next
     Wend
@@ -876,11 +926,11 @@ Procedure SetMaterialCulling()
         MaterialCullingMode(i,#PB_Material_NoCulling)
       EndIf
       For ii = 0 To 5
-        If IsMaterial(SBlocks(i)\tex(ii))
+        If IsMaterial(SBlocks(i)\mat(ii))
           If SBlocks(i)\type = #BLOCKTYPE_ALPHA
-            MaterialCullingMode(SBlocks(i)\tex(ii),#PB_Material_ClockWiseCull)
+            MaterialCullingMode(SBlocks(i)\mat(ii),#PB_Material_ClockWiseCull)
           Else
-            MaterialCullingMode(SBlocks(i)\tex(ii),#PB_Material_NoCulling)
+            MaterialCullingMode(SBlocks(i)\mat(ii),#PB_Material_NoCulling)
           EndIf
         EndIf
       Next
@@ -888,8 +938,8 @@ Procedure SetMaterialCulling()
     ResetMap(CBlocks())
     While(NextMapElement(CBlocks()))
       For ii = 0 To 5
-        If IsMaterial(CBlocks()\tex(ii))
-          MaterialCullingMode(CBlocks()\tex(ii),#PB_Material_NoCulling)
+        If IsMaterial(CBlocks()\mat(ii))
+          MaterialCullingMode(CBlocks()\mat(ii),#PB_Material_NoCulling)
         EndIf
       Next
     Wend
@@ -951,10 +1001,10 @@ Procedure.s ReadRegKey(OpenKey.l, SubKey.s, ValueName.s)
   
 
 Procedure initBlockSubstWindow()
-  OpenWindow(#BSubstWind,0,0,250,750,"Block substitution",#PB_Window_WindowCentered | #PB_Window_Tool | #PB_Window_BorderLess,WindowID(0))
+  OpenWindow(#BSubstWind,0,0,250,750,"Block selection",#PB_Window_WindowCentered | #PB_Window_Tool | #PB_Window_BorderLess,WindowID(0))
   ResizeWindow(#BSubstWind, WindowX(0,#PB_Window_InnerCoordinate), WindowY(#BSubstWind,#PB_Window_InnerCoordinate)+20, #PB_Ignore, #PB_Ignore)
-  ListIconGadget(#BlockListIcon,0,0,250,750,"Original Block",125,#PB_ListIcon_FullRowSelect)
-  AddGadgetColumn(#BlockListIcon,1,"Substituted Block",125)
+  ListIconGadget(#BlockListIcon,0,0,250,750,"Block",250,#PB_ListIcon_FullRowSelect)
+  ;AddGadgetColumn(#BlockListIcon,1,"Substituted Block",125)
   BlockListIconIL = ImageList_Create_(#blockPrevSize,#blockPrevSize,#ILC_COLOR32| #ILC_MASK, 0, 100)
   SendMessage_(GadgetID(#BlockListIcon), #LVM_SETIMAGELIST, #LVSIL_SMALL, BlockListIconIL)
   StickyWindow(#BSubstWind, #True) 
@@ -967,8 +1017,10 @@ Procedure AddBlockToList(text.s,id,cid)
   BlockListIcon()\id = id
   BlockListIcon()\cblock = cid
   If id = 66 And FindMapElement(CBlocks(),Str(cid))
-    If IsImage(CBlocks()\prev)
-      icon = CopyImage_(ImageID(cblocks()\prev),#IMAGE_BITMAP,#blockPrevSize,#blockPrevSize,0)
+    img = LoadImage(#PB_Any,GetLApplicationDataDirectory()+"CyubE3dit\cblock_prev\"+Str(cid)+".png")
+    If img
+      ResizeImage(img,#blockPrevSize,#blockPrevSize)
+      icon = CopyImage_(ImageID(img),#IMAGE_BITMAP,#blockPrevSize,#blockPrevSize,0)
       ImageList_Add_(BlockListIconIL,icon,0)
     Else
       ImageList_Add_(BlockListIconIL,ImageID(CreateImage(#PB_Any,#blockPrevSize,#blockPrevSize,32,RGB(255,0,255))),0)
@@ -976,6 +1028,7 @@ Procedure AddBlockToList(text.s,id,cid)
   ElseIf id <> 66
     img = LoadImage(#PB_Any,GetLApplicationDataDirectory()+"CyubE3dit\block_prev\"+Str(id)+".png")
     If img
+      ResizeImage(img,#blockPrevSize,#blockPrevSize)
       icon = CopyImage_(ImageID(img),#IMAGE_BITMAP,#blockPrevSize,#blockPrevSize,0)
       ImageList_Add_(BlockListIconIL,icon,0)
       FreeImage(img)
@@ -994,8 +1047,7 @@ Procedure AddBlockToList(text.s,id,cid)
 EndProcedure
 
 Procedure RotateSchematic(Map customBlocks.xy(), Map torches.xy(), *destbuff, rotation)
-
-  Dim dest(schBox\sx*schBox\sz)
+  Dim dest(toolBox\sx * toolBox\sz)
   Dim rotRemap(6)
   rotRemap(0) = 3
   rotRemap(1) = 2
@@ -1006,9 +1058,9 @@ Procedure RotateSchematic(Map customBlocks.xy(), Map torches.xy(), *destbuff, ro
   NewMap customBlocksRot.xy()
   NewMap torchesRot.xy()
   While rotation
-    sx = schBox\sx
-    sy = schBox\sz
-    sz = schBox\sy
+    sx = toolBox\sx
+    sy = toolBox\sz
+    sz = toolBox\sy
     For z = 0 To sz-1
       dest_col = sy - 1 
       For h = 0 To sy - 1
@@ -1033,9 +1085,7 @@ Procedure RotateSchematic(Map customBlocks.xy(), Map torches.xy(), *destbuff, ro
          Next
        Next
      Next z
-     schBox\sx = sy
-     schBox\sz = sx
-     schBox\sy = sz
+     
      
      ClearMap(customBlocks())
      ClearMap(torches())
@@ -1049,7 +1099,12 @@ Procedure RotateSchematic(Map customBlocks.xy(), Map torches.xy(), *destbuff, ro
      While NextMapElement(torchesRot())
        torches(MapKey(torchesRot()))\vis = torchesRot()\vis
      Wend
-    rotation-1
+     rotation-1
+     toolBox\sx = sy
+     toolBox\sz = sx
+     toolBox\sy = sz
+     ClearMap(torchesRot())
+     ClearMap(customBlocksRot())
   Wend
   FreeMap(customBlocksRot())
   FreeMap(torchesRot())
@@ -1079,7 +1134,7 @@ EndProcedure
 Procedure StopEditing()
   If g_EditMode <> #mode_normal
     g_EditMode = #mode_normal
-    HideToolBlock(#True)
+    HideToolBlock()
     If(IsStaticGeometry(schGeo\id))
       WorldShadows(g_Shadows)
       FreeStaticGeometry(schGeo\id)
@@ -1088,6 +1143,209 @@ Procedure StopEditing()
   EndIf
 EndProcedure
 
+Procedure setToolBlocktype(BlockID,cID=0)
+  Select BlockID
+    Case -1:
+      For i=0 To 5
+        CopyMaterial(#ToolBlock,#TopFillerMesh+i)
+        MaterialBlendingMode(#TopFillerMesh+i, #PB_Material_AlphaBlend)
+      Next
+    Case 66:
+      If(FindMapElement(CBlocks(),Str(cID)))
+        For i=0 To 5
+          GetScriptMaterial(#TopFillerMesh+i, "Test")
+        Next
+        Select CBlocks()\mode
+          Case 1:
+            For i=0 To 5
+              MaterialTextureAliases(#TopFillerMesh+i, TextureID(CBlocks()\tex(#texInd_all)), 0,0,0)
+            Next
+          Case 2:
+            MaterialTextureAliases(#TopFillerMesh, TextureID(CBlocks()\tex(#texInd_upDown)), 0,0,0)
+            MaterialTextureAliases(#BottomFillerMesh, TextureID(CBlocks()\tex(#texInd_upDown)), 0,0,0)
+            MaterialTextureAliases(#LeftFillerMesh, TextureID(CBlocks()\tex(#texInd_sides)), 0,0,0)
+            MaterialTextureAliases(#RightFillerMesh, TextureID(CBlocks()\tex(#texInd_sides)), 0,0,0)
+            MaterialTextureAliases(#FrontFillerMesh, TextureID(CBlocks()\tex(#texInd_sides)), 0,0,0)
+            MaterialTextureAliases(#BackFillerMesh, TextureID(CBlocks()\tex(#texInd_sides)), 0,0,0)
+          Case 3:
+            MaterialTextureAliases(#TopFillerMesh, TextureID(CBlocks()\tex(#texInd_top)), 0,0,0)
+            MaterialTextureAliases(#BottomFillerMesh, TextureID(CBlocks()\tex(#texInd_bottom)), 0,0,0)
+            MaterialTextureAliases(#LeftFillerMesh, TextureID(CBlocks()\tex(#texInd_sides)), 0,0,0)
+            MaterialTextureAliases(#RightFillerMesh, TextureID(CBlocks()\tex(#texInd_sides)), 0,0,0)
+            MaterialTextureAliases(#FrontFillerMesh, TextureID(CBlocks()\tex(#texInd_sides)), 0,0,0)
+            MaterialTextureAliases(#BackFillerMesh, TextureID(CBlocks()\tex(#texInd_sides)), 0,0,0)
+          Case 4:
+            MaterialTextureAliases(#TopFillerMesh, TextureID(CBlocks()\tex(#texInd_top)), 0,0,0)
+            MaterialTextureAliases(#BottomFillerMesh, TextureID(CBlocks()\tex(#texInd_bottom)), 0,0,0)
+            MaterialTextureAliases(#LeftFillerMesh, TextureID(CBlocks()\tex(#texInd_left)), 0,0,0)
+            MaterialTextureAliases(#RightFillerMesh, TextureID(CBlocks()\tex(#texInd_right)), 0,0,0)
+            MaterialTextureAliases(#FrontFillerMesh, TextureID(CBlocks()\tex(#texInd_front)), 0,0,0)
+            MaterialTextureAliases(#BackFillerMesh, TextureID(CBlocks()\tex(#texInd_back)), 0,0,0)
+        EndSelect
+      EndIf
+      
+    Default:
+      For i=0 To 5
+        GetScriptMaterial(#TopFillerMesh+i, "Test")
+      Next
+      Select SBlocks(BlockID)\mode
+        Case 1:
+          For i=0 To 5
+            MaterialTextureAliases(#TopFillerMesh+i, TextureID(SBlocks(BlockID)\tex(#texInd_all)), 0,0,0)
+          Next
+        Case 2:
+          MaterialTextureAliases(#TopFillerMesh, TextureID(SBlocks(BlockID)\tex(#texInd_upDown)), 0,0,0)
+          MaterialTextureAliases(#BottomFillerMesh, TextureID(SBlocks(BlockID)\tex(#texInd_upDown)), 0,0,0)
+          MaterialTextureAliases(#LeftFillerMesh, TextureID(SBlocks(BlockID)\tex(#texInd_sides)), 0,0,0)
+          MaterialTextureAliases(#RightFillerMesh, TextureID(SBlocks(BlockID)\tex(#texInd_sides)), 0,0,0)
+          MaterialTextureAliases(#FrontFillerMesh, TextureID(SBlocks(BlockID)\tex(#texInd_sides)), 0,0,0)
+          MaterialTextureAliases(#BackFillerMesh, TextureID(SBlocks(BlockID)\tex(#texInd_sides)), 0,0,0)
+        Case 3:
+          MaterialTextureAliases(#TopFillerMesh, TextureID(SBlocks(BlockID)\tex(#texInd_top)), 0,0,0)
+          MaterialTextureAliases(#BottomFillerMesh, TextureID(SBlocks(BlockID)\tex(#texInd_bottom)), 0,0,0)
+          MaterialTextureAliases(#LeftFillerMesh, TextureID(SBlocks(BlockID)\tex(#texInd_sides)), 0,0,0)
+          MaterialTextureAliases(#RightFillerMesh, TextureID(SBlocks(BlockID)\tex(#texInd_sides)), 0,0,0)
+          MaterialTextureAliases(#FrontFillerMesh, TextureID(SBlocks(BlockID)\tex(#texInd_sides)), 0,0,0)
+          MaterialTextureAliases(#BackFillerMesh, TextureID(SBlocks(BlockID)\tex(#texInd_sides)), 0,0,0)
+        Case 4:
+          MaterialTextureAliases(#TopFillerMesh, TextureID(SBlocks(BlockID)\tex(#texInd_top)), 0,0,0)
+          MaterialTextureAliases(#BottomFillerMesh, TextureID(SBlocks(BlockID)\tex(#texInd_bottom)), 0,0,0)
+          MaterialTextureAliases(#LeftFillerMesh, TextureID(SBlocks(BlockID)\tex(#texInd_left)), 0,0,0)
+          MaterialTextureAliases(#RightFillerMesh, TextureID(SBlocks(BlockID)\tex(#texInd_right)), 0,0,0)
+          MaterialTextureAliases(#FrontFillerMesh, TextureID(SBlocks(BlockID)\tex(#texInd_front)), 0,0,0)
+          MaterialTextureAliases(#BackFillerMesh, TextureID(SBlocks(BlockID)\tex(#texInd_back)), 0,0,0)
+      EndSelect
+  EndSelect
+  ScaleToolBlock(toolBox\sx,toolBox\sy,toolBox\sz)
+EndProcedure
+
+Procedure initToolBlock()
+  CreateTexture(#Marker_green,256,256)
+  StartDrawing(TextureOutput(#Marker_green))
+  DrawingMode(#PB_2DDrawing_AlphaBlend)
+  Box(0,0,256,256,RGBA(50,200,50,70))
+  DrawingMode(#PB_2DDrawing_Outlined)
+  Box(0,0,256,256,RGB(0,200,0))
+  StopDrawing()
+  CreateMaterial(#Marker_green,TextureID(#Marker_green))
+  MaterialBlendingMode(#Marker_green,#PB_Material_AlphaBlend)
+  MaterialCullingMode(#Marker_green,#PB_Material_NoCulling)
+  
+  LoadTexture(#ToolBlock,"Toolblock.png")
+  LoadTexture(#ToolBlock_act,"Toolblock_act.png")
+  CreateMaterial(#ToolBlock,TextureID(#ToolBlock))
+  CreateMaterial(#ToolBlock_act,TextureID(#ToolBlock_act))
+  MaterialBlendingMode(#ToolBlock, #PB_Material_AlphaBlend)
+  MaterialBlendingMode(#ToolBlock_act, #PB_Material_AlphaBlend)
+  MaterialCullingMode(#ToolBlock,#PB_Material_NoCulling)
+  MaterialCullingMode(#ToolBlock_act,#PB_Material_NoCulling)
+  
+  setToolBlocktype(0)
+  MaterialShadingMode(#TopFillerMesh,#PB_Material_Flat)
+  MaterialFog(#TopFillerMesh,$FFFFFF,1,0,300)
+  SetMaterialColor(#TopFillerMesh, #PB_Material_DiffuseColor, RGBA(100,200,100, 255))
+  
+  MaterialShadingMode(#BottomFillerMesh,#PB_Material_Flat)
+  MaterialFog(#BottomFillerMesh,$FFFFFF,1,0,300)
+  SetMaterialColor(#BottomFillerMesh, #PB_Material_DiffuseColor, RGBA(100,200,100, 255))
+  
+  MaterialShadingMode(#LeftFillerMesh,#PB_Material_Flat)
+  MaterialFog(#LeftFillerMesh,$FFFFFF,1,0,300)
+  SetMaterialColor(#LeftFillerMesh, #PB_Material_DiffuseColor, RGBA(100,200,100, 255))
+  
+  MaterialShadingMode(#RightFillerMesh,#PB_Material_Flat)
+  MaterialFog(#RightFillerMesh,$FFFFFF,1,0,300)
+  SetMaterialColor(#RightFillerMesh, #PB_Material_DiffuseColor, RGBA(100,200,100, 255))
+  
+  MaterialShadingMode(#FrontFillerMesh,#PB_Material_Flat)
+  MaterialFog(#FrontFillerMesh,$FFFFFF,1,0,300)
+  SetMaterialColor(#FrontFillerMesh, #PB_Material_DiffuseColor, RGBA(100,200,100, 255))
+  
+  MaterialShadingMode(#BackFillerMesh,#PB_Material_Flat)
+  MaterialFog(#BackFillerMesh,$FFFFFF,1,0,300)
+  SetMaterialColor(#BackFillerMesh, #PB_Material_DiffuseColor, RGBA(100,200,100,255))
+  
+  CreateTexture(#ToolMouseover,1024,1024)
+  StartDrawing(TextureOutput(#ToolMouseover))
+  DrawingMode(#PB_2DDrawing_AlphaBlend)
+  Box(0,0,1024,1024,$00000000)
+  DrawAlphaImage(ImageID(LoadImage(#PB_Any,"./Textures/toolblock_act.png")),0,0)
+  StopDrawing()
+  CreateMaterial(#ToolMouseover,TextureID(#ToolMouseover))
+  MaterialFilteringMode(#ToolMouseover,#PB_Material_None)
+  MaterialBlendingMode(#ToolMouseover,#PB_Material_AlphaBlend)
+  DisableMaterialLighting(#ToolMouseover, #True)
+  CreateEntity(#ToolMouseover,MeshID(#FaceLeft+i),MaterialID(#ToolMouseover),0,0,0,1)
+  EntityRenderMode(#ToolMouseover, #PB_Shadow_None)
+  CreateSphere(#Tool_origin,0.4)
+  CreateEntity(#Tool_origin,MeshID(#Tool_origin),MaterialID(#MATERIAL_BLACK))
+  HideEntity(#Tool_origin,#True)
+  HideEntity(#ToolMouseover,#True)
+EndProcedure
+
+
+Procedure ScaleToolBlock(sx.f,sy.f,sz.f)
+  Shared toolBox
+  
+  If IsNode(#ToolBlock)
+    x.f=NodeX(#ToolBlock)
+    y.f=NodeY(#ToolBlock)
+    z.f=NodeZ(#ToolBlock)
+    FreeNode(#ToolBlock)
+  EndIf
+ 
+  toolBox\sx = Round(sx,#PB_Round_Nearest)
+  toolBox\sy = Round(sy,#PB_Round_Nearest)
+  toolBox\sz = Round(sz,#PB_Round_Nearest)
+  sx+0.03
+  sy+0.03
+  sz+0.03
+
+  CreatePlane(#TopFillerMesh, 0.5*sz, 0.5*sx, 1, 1, toolBox\sz, toolBox\sx)
+  CreateEntity(#TopFillerMesh,MeshID(#TopFillerMesh),MaterialID(#TopFillerMesh),0,sy/4,0)
+  RotateEntity(#TopFillerMesh,0,90,0,#PB_Absolute)
+  
+  CreatePlane(#BottomFillerMesh, 0.5*sz, 0.5*sx, 1, 1, toolBox\sz, toolBox\sx)
+  CreateEntity(#BottomFillerMesh,MeshID(#BottomFillerMesh),MaterialID(#BottomFillerMesh),0,-sy/4,0)
+  RotateEntity(#BottomFillerMesh,180,90,0,#PB_Absolute)
+  
+  CreatePlane(#LeftFillerMesh,0.5*sz, 0.5*sy, 1, 1, toolBox\sz, toolBox\sy)
+  CreateEntity(#LeftFillerMesh,MeshID(#LeftFillerMesh),MaterialID(#LeftFillerMesh),-sx/4,0,0,2)
+  RotateEntity(#LeftFillerMesh,-90,0,90,#PB_Absolute)
+  
+  CreatePlane(#RightFillerMesh, 0.5*sz, 0.5*sy, 1, 1, toolBox\sz, toolBox\sy)
+  CreateEntity(#RightFillerMesh,MeshID(#RightFillerMesh),MaterialID(#RightFillerMesh),sx/4,0,0,2)
+  RotateEntity(#RightFillerMesh,-90,0,-90,#PB_Absolute)
+  
+  CreatePlane(#FrontFillerMesh,0.5*sx, 0.5*sy, 1, 1, toolBox\sx, toolBox\sy)
+  CreateEntity(#FrontFillerMesh,MeshID(#FrontFillerMesh),MaterialID(#FrontFillerMesh),0,0,sz/4,2)
+  RotateEntity(#FrontFillerMesh,90,180,0,#PB_Absolute)
+  
+  CreatePlane(#BackFillerMesh, 0.5*sx, 0.5*sy, 1, 1, toolBox\sx, toolBox\sy)
+  CreateEntity(#BackFillerMesh,MeshID(#BackFillerMesh),MaterialID(#BackFillerMesh),0,0,-sz/4,2)
+  RotateEntity(#BackFillerMesh,-90,0,0,#PB_Absolute)
+  CreateNode(#ToolBlock, x, y, z)
+  AttachNodeObject(#ToolBlock, EntityID(#TopFillerMesh))
+  AttachNodeObject(#ToolBlock, EntityID(#BottomFillerMesh))
+  AttachNodeObject(#ToolBlock, EntityID(#LeftFillerMesh))
+  AttachNodeObject(#ToolBlock, EntityID(#RightFillerMesh))
+  AttachNodeObject(#ToolBlock, EntityID(#FrontFillerMesh))
+  AttachNodeObject(#ToolBlock, EntityID(#BackFillerMesh))
+EndProcedure
+
+Procedure ZoomToolBlock(zx.f, zy.f, zz.f)
+  ScaleEntity(#TopFillerMesh,zx,zy,zz, #PB_Absolute)
+  ScaleEntity(#BottomFillerMesh,zx,zy,zz, #PB_Absolute)
+  ScaleEntity(#LeftFillerMesh,zx,zy,zz, #PB_Absolute)
+  ScaleEntity(#RightFillerMesh,zx,zy,zz, #PB_Absolute)
+  ScaleEntity(#FrontFillerMesh,zx,zy,zz, #PB_Absolute)
+  ScaleEntity(#BackFillerMesh,zx,zy,zz, #PB_Absolute)
+EndProcedure
+
+
+
+
+
 
 
 
@@ -1095,7 +1353,7 @@ EndProcedure
 
   
 ; IDE Options = PureBasic 5.72 (Windows - x64)
-; CursorPosition = 649
-; FirstLine = 624
-; Folding = -----
+; CursorPosition = 1307
+; FirstLine = 1285
+; Folding = ------
 ; EnableXP

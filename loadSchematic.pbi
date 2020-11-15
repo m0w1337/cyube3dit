@@ -19,12 +19,12 @@ Procedure displayCYSchematic(*prcnt.int)
   file = OpenFile(#PB_Any,filename,#PB_File_SharedRead)
   
   If file
-    schBox\sx = ReadLong(file)
-    schBox\sz = ReadLong(file)
-    schBox\sy = ReadLong(file)
-    sx = schBox\sx
-    sy = schBox\sz
-    sz = schBox\sy
+    toolBox\sx = ReadLong(file)
+    toolBox\sz = ReadLong(file)
+    toolBox\sy = ReadLong(file)
+    sx = toolBox\sx
+    sy = toolBox\sz
+    sz = toolBox\sy
     FileSeek(file,Lof(file)-4)
     *destbuff = AllocateMemory(ReadLong(file))
     *srcbuff = AllocateMemory(Lof(file)-20)
@@ -82,12 +82,11 @@ Procedure displayCYSchematic(*prcnt.int)
           *prcnt\i = #PB_ProgressBar_Unknown
           UnlockMutex(ProgMutex)
           RotateSchematic(customBlocks(),customBlocks(),*destbuff,rotation)
-          sx = schBox\sx
-          sy = schBox\sz
-          sz = schBox\sy
+          sx = toolBox\sx
+          sy = toolBox\sz
+          sz = toolBox\sy
         EndIf
         
-        schemGeo = 100
         ClearList(schBlocks())
         For x=0 To sx-1
           LockMutex(ProgMutex)
@@ -627,6 +626,7 @@ If(OpenFile(0,"D:\m0\INGb\projekte\cyubeVR\castledepoindestev-2"))
 EndProcedure
 
 ; IDE Options = PureBasic 5.72 (Windows - x64)
-; CursorPosition = 13
+; CursorPosition = 88
+; FirstLine = 239
 ; Folding = -
 ; EnableXP

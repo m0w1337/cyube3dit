@@ -358,7 +358,7 @@ Procedure SaveCyubeAreaToFile(x.f,z.f,y.f,sx,sz,sy)
 EndProcedure
 
 ; IDE Options = PureBasic 5.72 (Windows - x64)
-; CursorPosition = 247
+; CursorPosition = 226
 ; FirstLine = 217
 ; Folding = -
 ; EnableXP

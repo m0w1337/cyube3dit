@@ -17,6 +17,7 @@
 #menu_del_except = 22
 #menu_del_only = 23
 #menu_nolocalmods = 24
+#menu_fillWithBlocks = 25
 
 
 #Font_about_title = 10
@@ -43,6 +44,7 @@ Procedure CreateMenuEntries()
   MenuTitle("File")
   MenuItem(#menu_load, "Load Schematic")
   MenuItem(#menu_save, "Save Schematic Cube")
+  MenuItem(#menu_fillWithBlocks,"Fill Area with Blocks")
   OpenSubMenu("Chunk deletion")
   MenuItem(#menu_define_marker,"Add a marker area")
   MenuItem(#menu_remove_marker,"Remove all markers")
@@ -122,7 +124,7 @@ Procedure CreateMenuEntries()
  
  Procedure DisableMenuInteraction(state)
    Shared Worlds()
-   For i=0 To 20
+   For i=0 To 25
      DisableMenuItem(0,i,state)
    Next
    PushListPosition(worlds())
@@ -164,24 +166,23 @@ Procedure HandleMenuEvents(evMenu)
           g_SchematicFile = OpenFileRequester("Choose a schematic file","","Schematic Files (*.CySch, *.gz)|*.CySch;*.gz|All files (*.*)|*.*",0)
           If g_SchematicFile
             g_EditMode = #mode_insert
-            CYSchematicGetSize(@schBox,g_SchematicFile)
-            HideToolBlock(#False)
-            ScaleToolBlock(0.03,0.03,0.03,#PB_Absolute)
+            CYSchematicGetSize(@toolBox,g_SchematicFile)
+            setToolBlocktype(-1)
+            ScaleToolBlock(toolBox\sx,toolBox\sy,toolBox\sz)
             MoveNode(#ToolBlock,Round(CameraX(0),#PB_Round_Up),Round(CameraY(0),#PB_Round_Up),Round(CameraZ(0),#PB_Round_Up),#PB_Absolute)
-            MoveNode(#ToolBlock,CameraDirectionX(0)*(schBox\sx),CameraDirectionY(0)*schBox\sy/3,CameraDirectionZ(0)*(schBox\sz),#PB_Relative)
-            MoveNode(#ToolBlock,Round(NodeX(#ToolBlock),#PB_Round_Up)-(schBox\sx-1)*0.25,Round(NodeY(#ToolBlock),#PB_Round_Up)-(schBox\sy-1)*0.25,Round(NodeZ(#ToolBlock),#PB_Round_Up)-(schBox\sz-1)*0.25,#PB_Absolute)
-            ;initBlockSubstWindow()
-            schBox\x1 = NodeX(#ToolBlock) - (schBox\sx-1)/4
-            schBox\y1 = NodeY(#ToolBlock) - (schBox\sy-1)/4
-            schBox\z1 = NodeZ(#ToolBlock) - (schBox\sz-1)/4
-            If schBox\y1 < 0  ;Make sure the inserted schematic is spawned within Y boundaries!!!
-              MoveNode(#ToolBlock,0,-schBox\y1+4,0,#PB_Relative)
-            ElseIf schBox\y1 + schBox\sy / 2 > 800
-              MoveNode(#ToolBlock,0,796 - (schBox\y1 + schBox\sy / 2),0,#PB_Relative)
+            MoveNode(#ToolBlock,CameraDirectionX(0)*(toolBox\sx),CameraDirectionY(0) * toolBox\sy/3,CameraDirectionZ(0)*(toolBox\sz),#PB_Relative)
+            MoveNode(#ToolBlock,Round(NodeX(#ToolBlock),#PB_Round_Up)-(toolBox\sx-1)*0.25,Round(NodeY(#ToolBlock),#PB_Round_Up)-(toolBox\sy-1)*0.25,Round(NodeZ(#ToolBlock),#PB_Round_Up)-(toolBox\sz-1)*0.25,#PB_Absolute)
+            toolBox\x1 = NodeX(#ToolBlock) - (toolBox\sx-1)/4
+            toolBox\y1 = NodeY(#ToolBlock) - (toolBox\sy-1)/4
+            toolBox\z1 = NodeZ(#ToolBlock) - (toolBox\sz-1)/4
+            If toolBox\y1 < 0  ;Make sure the inserted schematic is spawned within Y boundaries!!!
+              MoveNode(#ToolBlock,0,-toolBox\y1+4,0,#PB_Relative)
+            ElseIf toolBox\y1 + toolBox\sy / 2 > 800
+              MoveNode(#ToolBlock,0,796 - (toolBox\y1 + toolBox\sy / 2),0,#PB_Relative)
             EndIf
-            schBox\x1 = NodeX(#ToolBlock) - (schBox\sx-1)/4
-            schBox\y1 = NodeY(#ToolBlock) - (schBox\sy-1)/4
-            schBox\z1 = NodeZ(#ToolBlock) - (schBox\sz-1)/4
+            toolBox\x1 = NodeX(#ToolBlock) - (toolBox\sx-1)/4
+            toolBox\y1 = NodeY(#ToolBlock) - (toolBox\sy-1)/4
+            toolBox\z1 = NodeZ(#ToolBlock) - (toolBox\sz-1)/4
             g_schRotation = 0
             OpenProgress(progH.phnd, "Loading Cyube Schematic...", "Optimizing blocks...")
             prog.int
@@ -191,11 +192,11 @@ Procedure HandleMenuEvents(evMenu)
               progress = prog\i
               UnlockMutex(ProgMutex)
               UpdateProgress(progH,"Optimizing mesh..."+Str(progress)+"%",progress)
-              ScaleToolBlock((schBox\sx+0.03) * progress / 100,(schBox\sy+0.03) * progress / 100,(schBox\sz+0.03) * progress / 100,#PB_Absolute)
+              ZoomToolBlock(progress / 100,progress / 100,progress / 100)
               RenderWorld()
               FlipBuffers()
             Wend
-            ScaleToolBlock(schBox\sx+0.03,schBox\sy+0.03,schBox\sz+0.03,#PB_Absolute)
+            ZoomToolBlock(1,1,1)
             CloseProgress(progH)
             If ListSize(SchBlocks())
               g_UpdateSchGeo = 1
@@ -205,7 +206,7 @@ Procedure HandleMenuEvents(evMenu)
               WorldShadows(#PB_Shadow_None)
             Else
               g_EditMode = #mode_normal
-              HideToolBlock(#True)
+              HideToolBlock()
             EndIf
             updateMsgBox(g_EditMode, currentchunk\vis)
           EndIf
@@ -215,13 +216,34 @@ Procedure HandleMenuEvents(evMenu)
             WorldShadows(g_Shadows)
             FreeStaticGeometry(schGeo\id)
           EndIf
-          HideToolBlock(#False)
-          ScaleToolBlock(3.01,3.01,3.01,#PB_Absolute)
+          setToolBlocktype(-1)
+          ScaleToolBlock(3.03,3.03,3.03)
           MoveNode(#ToolBlock,Round(CameraX(0),#PB_Round_Up),Round(CameraY(0),#PB_Round_Up),Round(CameraZ(0),#PB_Round_Up),#PB_Absolute)
           MoveNode(#ToolBlock,CameraDirectionX(0)*6,0.5,CameraDirectionZ(0)*6,#PB_Relative)
           MoveNode(#ToolBlock,Round(NodeX(#ToolBlock),#PB_Round_Up),Round(NodeY(#ToolBlock),#PB_Round_Up),Round(NodeZ(#ToolBlock),#PB_Round_Up),#PB_Absolute)
           CameraFollow(0,NodeID(#ToolBlock),0,0,1,1,0)
           updateMsgBox(g_EditMode, currentchunk\vis)
+        Case #menu_fillWithBlocks:
+          initBlockSubstWindow()
+          For i=0 To 255
+            If SBlocks(i)\mode > 0 And SBlocks(i)\mode < 4
+              AddBlockToList(SBlocks(i)\name,i,0)
+            EndIf
+          Next i
+          ResetMap(CBlocks())
+          While NextMapElement(CBlocks())
+            AddBlockToList(CBlocks()\name,66,CBlocks()\id)
+          Wend
+          g_EditMode = #mode_fill
+          If(IsStaticGeometry(schGeo\id))
+            FreeStaticGeometry(schGeo\id)
+          EndIf
+          setToolBlocktype(0)
+          ScaleToolBlock(3.03,3.03,3.03)
+          MoveNode(#ToolBlock,Round(CameraX(0),#PB_Round_Up),Round(CameraY(0),#PB_Round_Up),Round(CameraZ(0),#PB_Round_Up),#PB_Absolute)
+          MoveNode(#ToolBlock,CameraDirectionX(0)*6,0.5,CameraDirectionZ(0)*6,#PB_Relative)
+          MoveNode(#ToolBlock,Round(NodeX(#ToolBlock),#PB_Round_Up),Round(NodeY(#ToolBlock),#PB_Round_Up),Round(NodeZ(#ToolBlock),#PB_Round_Up),#PB_Absolute)
+          CameraFollow(0,NodeID(#ToolBlock),0,0,1,1,0)
         Case #menu_quit:
           g_exit = 1
         Case #menu_nolocalmods:
@@ -300,8 +322,7 @@ Procedure HandleMenuEvents(evMenu)
         Case #menu_define_marker:
           g_EditMode = #mode_chunksel_nodel
           updateMsgBox(g_EditMode, currentchunk\vis)
-          HideToolBlock(#False)
-          ScaleToolBlock(32.01,200.01,32.01,#PB_Absolute)
+          ScaleToolBlock(32.01,200.01,32.01)
           MoveNode(#ToolBlock,Round(CameraX(0)/16,#PB_Round_Up)*16,Round(CameraY(0),#PB_Round_Up)-25,Round(CameraZ(0)/16,#PB_Round_Up)*16,#PB_Absolute)
           MoveNode(#ToolBlock,CameraDirectionX(0)*16,0,CameraDirectionZ(0)*16,#PB_Relative)
           MoveNode(#ToolBlock,Round(NodeX(#ToolBlock)/16,#PB_Round_Up)*16-0.26,Round(NodeY(#ToolBlock),#PB_Round_Up),Round(NodeZ(#ToolBlock)/16,#PB_Round_Up)*16-0.26,#PB_Absolute)
@@ -314,7 +335,7 @@ Procedure HandleMenuEvents(evMenu)
           Wend
           ClearList(markers())
           g_EditMode = #mode_normal
-          HideToolBlock(#True)
+          HideToolBlock()
         Case #menu_del_only:
           If g_EditMode = #mode_chunksel_nodel
             MessageRequester("Attention","There is a marker selection, that is not yet confirmed, please finish the selection first, by either confirming (Enter) or deleting (Escape) the current selection.")
@@ -338,8 +359,12 @@ Procedure HandleMenuEvents(evMenu)
               If FileSize(g_saveDir+g_LastWorld+"/"+Str(affectedChunks()\vis)+".chunks")
                 DeleteFile(g_saveDir+g_LastWorld+"/"+Str(affectedChunks()\vis)+".chunks")
               EndIf
+              If FileSize(g_saveDir+g_LastWorld+"/"+Str(affectedChunks()\vis)+".chunkmon")
+                DeleteFile(g_saveDir+g_LastWorld+"/"+Str(affectedChunks()\vis)+".chunkmon")
+              EndIf
               If(db)
                 DatabaseUpdate(db, "DELETE FROM CHUNKDATA WHERE chunkid = "+Str(affectedChunks()\vis)+";")
+                DatabaseUpdate(db, "DELETE FROM MESHOBJECTS WHERE chunkid = "+Str(affectedChunks()\vis)+";")
               EndIf
               deleteChunk(affectedChunks()\vis)
             Wend
@@ -353,7 +378,7 @@ Procedure HandleMenuEvents(evMenu)
             Wend
             ClearList(markers())
             g_EditMode = #mode_normal
-            HideToolBlock(#True)
+            HideToolBlock()
           EndIf
         Case #menu_del_except:
           If g_EditMode = #mode_chunksel_nodel
@@ -382,6 +407,15 @@ Procedure HandleMenuEvents(evMenu)
                 Wend
                 FinishDirectory(dir)
               EndIf
+              dir = ExamineDirectory(#PB_Any,g_saveDir+g_LastWorld+"/","*.chunkmon")
+              If dir
+                While NextDirectoryEntry(dir)
+                  If Not FindMapElement(affectedChunks(),GetFilePart(DirectoryEntryName(dir),#PB_FileSystem_NoExtension))
+                    DeleteFile(g_saveDir+g_LastWorld+"/"+DirectoryEntryName(dir))
+                  EndIf
+                Wend
+                FinishDirectory(dir)
+              EndIf
               ResetMap(affectedChunks())
               If NextMapElement(affectedChunks())
                 exclude.s = " chunkid != "+Str(affectedChunks()\vis)
@@ -391,6 +425,7 @@ Procedure HandleMenuEvents(evMenu)
                 db = OpenDatabase(#PB_Any, g_saveDir+g_LastWorld+"/"+"chunkdata.sqlite", "", "",#PB_Database_SQLite)
                 If(db)
                   DatabaseUpdate(db, "DELETE FROM CHUNKDATA WHERE"+exclude+";")
+                  DatabaseUpdate(db, "DELETE FROM MESHOBJECTS WHERE"+exclude+";")
                   CloseDatabase(db)
                 EndIf
               EndIf
@@ -407,7 +442,7 @@ Procedure HandleMenuEvents(evMenu)
             Wend
             ClearList(markers())
             g_EditMode = #mode_normal
-            HideToolBlock(#True)
+            HideToolBlock()
           EndIf
           
         Case 90:
@@ -440,6 +475,7 @@ Procedure HandleMenuEvents(evMenu)
   EndProcedure
   
 ; IDE Options = PureBasic 5.72 (Windows - x64)
-; CursorPosition = 190
+; CursorPosition = 163
+; FirstLine = 138
 ; Folding = -
 ; EnableXP

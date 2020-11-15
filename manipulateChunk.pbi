@@ -302,22 +302,27 @@ Procedure ChangeSingleBlockID(id,cid,x.f,z.f,y.f)
 EndProcedure
 
 Procedure SaveModifiedChunk(x.f,z.f,y.f, rotation)
-  Shared DelMutex
+  Shared DelMutex, toolBox
   cySchFile.s = g_SchematicFile
   file = OpenFile(#PB_Any,cySchFile,#PB_File_SharedRead)
   If file
     OpenProgress(progH.pHnd,"World manipulation","Injecting the schematic into your world...")
-    schBox\sx = ReadLong(file)
-    schBox\sz = ReadLong(file)
-    schBox\sy = ReadLong(file)
-    sx = schBox\sx
-    sy = schBox\sz
-    sz = schBox\sy
     
+    sx = toolBox\sx
+    sy = toolBox\sz
+    sz = toolBox\sy
     areasize = sx*sy*sz
     startX.f = x-(sx-1)/4  ;Get the edge coordinate instead of the center
     startY.f = y-(sy-1)/4
     startZ.f = z-(sz-1)/4
+    endX.f = x + (sx-1)/4
+    endY.f = y + (sy-1)/4
+    endZ.f = z + (sz-1)/4
+    toolBox\sx = ReadLong(file)
+    toolBox\sz = ReadLong(file)
+    toolBox\sy = ReadLong(file)
+
+    
     FileSeek(file,Lof(file)-4)
      *destbuff = AllocateMemory(ReadLong(file))
     *srcbuff = AllocateMemory(Lof(file)-20)
@@ -330,7 +335,7 @@ Procedure SaveModifiedChunk(x.f,z.f,y.f, rotation)
         CloseLibrary(lib)
         numCblocks = 0
       If(destsize = MemorySize(*destbuff) And destsize > 0)
-          memoffs = sx*sy*sz
+          memoffs = toolBox\sx * toolBox\sy * toolBox\sz
           numCblocks = PeekL(*destbuff+memoffs)
           memoffs+4
         Else
@@ -373,13 +378,8 @@ Procedure SaveModifiedChunk(x.f,z.f,y.f, rotation)
       If rotation
         UpdateProgress(progH,"Preparing data...",#PB_ProgressBar_Unknown)
         RotateSchematic(customBlocks(),torches(),*destbuff,rotation)
-        sx = schBox\sx
-        sy = schBox\sz
-        sz = schBox\sy
-        startX.f = x-(sx-1)/4  ;Get the edge coordinate instead of the center
-        startY.f = y-(sy-1)/4
-        startZ.f = z-(sz-1)/4
       EndIf
+      
       NewMap affectedChunks.xy()
       thischunk.xy
       For blockx = 0 To sx
@@ -408,9 +408,7 @@ Procedure SaveModifiedChunk(x.f,z.f,y.f, rotation)
         Next
       Next
       
-      endX.f = x + (sx-1)/4
-      endY.f = y + (sy-1)/4
-      endZ.f = z + (sz-1)/4
+      
       ResetMap(affectedChunks())
       done = 0
       While(NextMapElement(affectedChunks()))
@@ -540,7 +538,7 @@ Procedure SaveModifiedChunk(x.f,z.f,y.f, rotation)
   ProcedureReturn 1
 EndProcedure
 ; IDE Options = PureBasic 5.72 (Windows - x64)
-; CursorPosition = 379
-; FirstLine = 349
+; CursorPosition = 337
+; FirstLine = 333
 ; Folding = -
 ; EnableXP

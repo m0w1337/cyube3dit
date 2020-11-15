@@ -56,11 +56,46 @@ Procedure publishCustomBlock(db, id, mode, name.s, author.s)
   
 EndProcedure
 
+Procedure publishStdBlock(db, id, mode, name.s, author.s)
+  SetDatabaseString(db,0,name)
+  SetDatabaseString(db,1,author)
+  img = ReadFile(#PB_Any,GetLApplicationDataDirectory()+"CyubE3dit\block_prev\"+Str(id)+".png",#PB_File_NoBuffering |#PB_File_SharedRead)
+  If img
+    *imgmem = AllocateMemory(Lof(img))
+    FileSeek(img,0)
+    ReadData(img,*imgmem,Lof(img))
+    SetDatabaseBlob(db,2,*imgmem,Lof(img))
+    SetDatabaseString(db,3,name)
+    SetDatabaseString(db,4,author)
+    SetDatabaseBlob(db,5,*imgmem,Lof(img))
+    CloseFile(img)
+    CheckDatabaseUpdate(db, "INSERT INTO StandardBlocks (id,name,author,type, preview,hasPrev) VALUES ("+Str(id)+", ?, ?, "+Str(mode)+", ?, 1) ON DUPLICATE KEY UPDATE type = "+Str(mode)+", name = ?, author = ?, preview = ?, hasPrev=1;")
+  Else
+    SetDatabaseString(db,2,name)
+    SetDatabaseString(db,3,author)
+    CheckDatabaseUpdate(db, "INSERT INTO StandardBlocks (id,name,author,type,hasPrev) VALUES ("+Str(id)+", ?, ?, "+Str(mode)+", 0) ON DUPLICATE KEY UPDATE type = "+Str(mode)+", name = ?, author = ?, hasPrev=0;")
+  EndIf
+  
+EndProcedure
+
 Procedure findCustomBlock(db,id, name.s)
   ret = 0
   If db
     SetDatabaseString(db,0,name)
     DatabaseQuery(db, "SELECT id from CustomBlocks WHERE id = "+Str(id)+" and name = ? and hasPrev = 1;")
+    If NextDatabaseRow(db)
+      ret = 1
+    EndIf
+    FinishDatabaseQuery(db)
+  EndIf
+  ProcedureReturn ret
+EndProcedure
+
+Procedure findStdBlock(db,id, name.s)
+  ret = 0
+  If db
+    SetDatabaseString(db,0,name)
+    DatabaseQuery(db, "SELECT id from StandardBlocks WHERE id = "+Str(id)+" and name = ? and hasPrev = 1;")
     If NextDatabaseRow(db)
       ret = 1
     EndIf
@@ -125,10 +160,11 @@ Procedure addCustomBlock(cID,async=1)
   DrawText((256-TextWidth("or CyubeVR won't"))/2,TextHeight(" ")+193,"or CyubeVR won't",RGB(0,0,0))
   DrawText((256-TextWidth("show it correctly."))/2,2*TextHeight(" ")+193,"show it correctly.",RGB(0,0,0))
   StopDrawing()
-  CBlocks()\tex(0) = CreateMaterial(#PB_Any,TextureID(CBlocks()\tex(0)))
+  CBlocks()\mat(0) = CreateMaterial(#PB_Any,TextureID(CBlocks()\tex(0)))
 EndProcedure
+
 ; IDE Options = PureBasic 5.72 (Windows - x64)
-; CursorPosition = 102
-; FirstLine = 66
+; CursorPosition = 162
+; FirstLine = 111
 ; Folding = --
 ; EnableXP
