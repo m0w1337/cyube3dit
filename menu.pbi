@@ -239,6 +239,8 @@ Procedure HandleMenuEvents(evMenu)
             FreeStaticGeometry(schGeo\id)
           EndIf
           setToolBlocktype(0)
+          FillerBlock\id = 0
+          FillerBlock\cID = 0
           ScaleToolBlock(3.03,3.03,3.03)
           MoveNode(#ToolBlock,Round(CameraX(0),#PB_Round_Up),Round(CameraY(0),#PB_Round_Up),Round(CameraZ(0),#PB_Round_Up),#PB_Absolute)
           MoveNode(#ToolBlock,CameraDirectionX(0)*6,0.5,CameraDirectionZ(0)*6,#PB_Relative)
@@ -475,7 +477,7 @@ Procedure HandleMenuEvents(evMenu)
   EndProcedure
   
 ; IDE Options = PureBasic 5.72 (Windows - x64)
-; CursorPosition = 163
-; FirstLine = 138
+; CursorPosition = 242
+; FirstLine = 225
 ; Folding = -
 ; EnableXP

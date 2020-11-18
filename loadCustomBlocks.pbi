@@ -25,10 +25,6 @@ Procedure LoadCustomBlocks(CustomBlockDir.s, noUpload)
                 pos1 = FindString(line,Chr(34))
                 pos2 = FindString(line,Chr(34),pos1+1)-1
                 CBname.s = ReverseString(Mid(line,pos1+1,pos2-pos1))      
-                If FindString(CBname,"Matrix")
-                  MessageRequester("","")
-                EndIf
-                
               ElseIf FindString(line,Chr(34)+"Mode"+Chr(34),0,#PB_String_NoCase)
                 line = ReverseString(line)
                 pos1 = FindString(line,":")
@@ -247,7 +243,7 @@ EndProcedure
 
 
 ; IDE Options = PureBasic 5.72 (Windows - x64)
-; CursorPosition = 38
-; FirstLine = 18
+; CursorPosition = 26
+; FirstLine = 12
 ; Folding = -
 ; EnableXP

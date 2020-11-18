@@ -97,6 +97,11 @@ Structure chunk
     cblock.l
   EndStructure
   
+  Structure blockID
+  id.a
+  cID.l
+  EndStructure
+  
   Structure face
     x.l
     y.l
@@ -169,6 +174,7 @@ Global Dim thread(#numthreads)
 Global g_deleteChunk.l
 Global Dim g_chunk0ToRender.i(#numthreads-1)
 Global toolBox.box
+Global FillerBlock.blockID
 Global NewList SchBlocks.block()
 Global currentchunk.xy  
 Global NewList Markers.marker()
@@ -720,17 +726,21 @@ Repeat
       EndIf
       If(KeyboardPushed(#PB_Key_LeftShift))
         KeyY = #CameraSpeed * movedelta * AccY
-      ElseIf(g_EditMode = #mode_insert And KeyboardPushed(#PB_Key_LeftControl))
+      ElseIf(KeyboardPushed(#PB_Key_LeftControl))
         KeyY = 0
         AccY = 0
-        SaveModifiedChunk(toolBox\x1 + (toolBox\sx-1)/4, toolBox\y1 + (toolBox\sy-1)/4, toolBox\z1 + (toolBox\sz-1)/4, g_schRotation)
-        g_EditMode = #mode_normal
-        HideToolBlock()
-        If IsStaticGeometry(schGeo\id)
-          WorldShadows(g_Shadows)
-          FreeStaticGeometry(schGeo\id)
+        If g_EditMode = #mode_insert
+          SaveModifiedChunk(toolBox\x1 + (toolBox\sx-1)/4, toolBox\y1 + (toolBox\sy-1)/4, toolBox\z1 + (toolBox\sz-1)/4, g_schRotation)
+          g_EditMode = #mode_normal
+          HideToolBlock()
+          If IsStaticGeometry(schGeo\id)
+            WorldShadows(g_Shadows)
+            FreeStaticGeometry(schGeo\id)
+          EndIf
+          ClearList(SchBlocks())
+        ElseIf g_EditMode = #mode_fill
+          SaveBlockFill(NodeX(#ToolBlock), NodeY(#ToolBlock), NodeZ(#ToolBlock),FillerBlock\id,FillerBlock\cID)
         EndIf
-        ClearList(SchBlocks())
       Else
         KeyY = #CameraSpeedSlow * movedelta  * AccY
       EndIf
@@ -872,7 +882,18 @@ Repeat
        ScaleEntity(Markers()\entity,Markers()\sx,800,Markers()\sz,#PB_Absolute)
        g_EditMode = #mode_normal
         HideToolBlock()
-      EndIf  
+      EndIf
+    ElseIf g_EditMode=#mode_fill
+      If KeyboardReleased(#PB_Key_Z) Or KeyboardReleased(#PB_Key_X)
+        ScaleToolBlock(toolBox\sz,toolbox\sy,toolbox\sx)
+        g_schRotation+1
+        If Mod(g_schRotation,2)
+          MoveNode(#ToolBlock,Round(2*(NodeX(#ToolBlock)-(toolBox\sx-1)*0.25),#PB_Round_Up)/2+(toolBox\sx-1)*0.25,NodeY(#ToolBlock),Round(2*(NodeZ(#ToolBlock)-(toolBox\sz-1)*0.25),#PB_Round_Up)/2+(toolBox\sz-1)*0.25,#PB_Absolute)
+        Else
+          g_schRotation = 0
+          MoveNode(#ToolBlock,Round(2*(NodeX(#ToolBlock)-(toolBox\sx-1)*0.25),#PB_Round_Down)/2+(toolBox\sx-1)*0.25,NodeY(#ToolBlock),Round(2*(NodeZ(#ToolBlock)-(toolBox\sz-1)*0.25),#PB_Round_Down)/2+(toolBox\sz-1)*0.25,#PB_Absolute)
+        EndIf
+      EndIf
     EndIf
   
     If KeyboardReleased(#PB_Key_Escape)
@@ -895,6 +916,8 @@ Repeat
        ElseIf EventType() = #PB_EventType_LeftClick
          SelectElement(BlockListIcon(),GetGadgetState(#BlockListIcon))
          setToolBlocktype(BlockListIcon()\id,BlockListIcon()\cblock)
+         FillerBlock\id = BlockListIcon()\id
+         FillerBlock\cID = BlockListIcon()\cblock
 ;         ResetList(BlockListIcon())
 ;         While NextElement(BlockListIcon())
 ;           If ListIndex(BlockListIcon()) = GetGadgetState(#BlockListIcon)
@@ -994,8 +1017,8 @@ End
 
 
 ; IDE Options = PureBasic 5.72 (Windows - x64)
-; CursorPosition = 128
-; FirstLine = 84
+; CursorPosition = 892
+; FirstLine = 855
 ; EnableXP
 ; Executable = test.exe
 ; CPU = 1

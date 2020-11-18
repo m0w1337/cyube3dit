@@ -7,7 +7,7 @@
   <section name="data">
     <explorer view="" pattern="0"/>
     <log show="1"/>
-    <lastopen date="2020-11-15 23:08" user="m0" host="DESKTOP-3MN1198"/>
+    <lastopen date="2020-11-17 19:34" user="m0" host="DESKTOP-3MN1198"/>
   </section>
   <section name="files">
     <file name="AsyncRenderer.pbi">
@@ -36,19 +36,19 @@
     </file>
     <file name="loadCustomBlocks.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="4b22b5ca486681943595162430804d4e"/>
+      <fingerprint md5="57c0afd1e54a0239419dfaf4339070d0"/>
     </file>
     <file name="loadSchematic.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
       <fingerprint md5="1dbde54253d93f4c63f0de5ce17b9bbd"/>
     </file>
     <file name="manipulateChunk.pbi">
-      <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate="+"/>
-      <fingerprint md5="4178d1469a2a59ca6d00917116137aea"/>
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
+      <fingerprint md5="d55d9f75ad75e1a4b662ef2f2b71f8ac"/>
     </file>
     <file name="menu.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="a1a87fcf07ccbb59b6995fd5f4228512"/>
+      <fingerprint md5="7eb6c31aa5eba188e387179c0f8d1b25"/>
     </file>
     <file name="SaveSchematic.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
@@ -56,7 +56,7 @@
     </file>
     <file name="WorldView.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="94d8e46ebd6da447ba3204d4eeb20f4d"/>
+      <fingerprint md5="e36f6dcd81825a1f1b0844565999c042"/>
     </file>
   </section>
   <section name="targets">
@@ -64,9 +64,9 @@
       <inputfile value="WorldView.pb"/>
       <outputfile value="Package\CyubeEdit.exe"/>
       <executable value="Package\CyubeEdit.exe"/>
-      <options thread="1" xpskin="1" debug="1"/>
+      <options thread="1" xpskin="1"/>
       <temporaryexe value="source"/>
-      <compilecount enable="1" value="1847"/>
+      <compilecount enable="1" value="1854"/>
       <buildcount enable="1" value="46"/>
       <versioninfo enable="1">
         <field0 value="1,1,2,%BUILDCOUNT"/>

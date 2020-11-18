@@ -537,8 +537,108 @@ Procedure SaveModifiedChunk(x.f,z.f,y.f, rotation)
   EndIf
   ProcedureReturn 1
 EndProcedure
+
+
+Procedure SaveBlockFill(x.f,z.f,y.f, id, cID)
+  Shared DelMutex, toolBox
+  OpenProgress(progH.pHnd,"World manipulation","Injecting the blocks into your world...")
+  
+  sx = toolBox\sx
+  sy = toolBox\sz
+  sz = toolBox\sy
+  areasize = sx*sy*sz
+  startX.f = x-(sx-1)/4  ;Get the edge coordinate instead of the center
+  startY.f = y-(sy-1)/4
+  startZ.f = z-(sz-1)/4
+  endX.f = x + (sx-1)/4
+  endY.f = y + (sy-1)/4
+  endZ.f = z + (sz-1)/4
+
+  NewMap affectedChunks.xy()
+  thischunk.xy
+  For blockx = 0 To sx
+    For blocky = 0 To sy
+      cbx.f = blockx
+      cbx = cbx/2
+      cby.f = blocky
+      cby = cby/2
+      getChunk(@thischunk,cbx+startX,cby+startY)
+      If(thischunk\vis = -1)
+        MessageRequester("Error","The insertion overlaps at least one not yet generated chunk, only generated chunnks can be manipulated!")
+        CloseWindow(progressWindow)
+        ProcedureReturn 0
+      EndIf
+      
+      affectedChunks(Str(thischunk\vis))\vis = thischunk\vis
+      affectedChunks()\x = thischunk\x
+      affectedChunks()\y = thischunk\y
+    Next
+  Next
+  
+  
+  ResetMap(affectedChunks())
+  done = 0
+  While(NextMapElement(affectedChunks()))
+    If(affectedChunks()\x < startX)
+      lsX.f = startX
+    Else
+      lsX.f = affectedChunks()\x
+    EndIf
+    If(affectedChunks()\y < startY)
+      lsY.f = startY
+    Else
+      lsY.f = affectedChunks()\y
+    EndIf
+    If(affectedChunks()\x + 15.5 > endX)
+      leX.f = endX
+    Else
+      leX.f = affectedChunks()\x + 15.5
+    EndIf
+    If(affectedChunks()\y + 15.5 > endY)
+      leY.f = endY
+    Else
+      leY.f = affectedChunks()\y + 15.5
+    EndIf
+    px.f=lsx - startX
+    While px <= lex - startX
+      py.f=lsy - startY
+      While py <= ley - startY
+        pz.f= 0
+        While pz <= endZ - startZ
+          bx.f = px + startX
+          by.f = py + startY
+          bz.f = pz + startZ
+           If(id <> 66)
+             cid = 1
+           EndIf
+           ChangeSingleBlockID(id,cid,bx,bz,by)
+           done = done+1
+          If(ElapsedMilliseconds()-lastU.q > 500)
+            lastU = ElapsedMilliseconds()
+            prcnt = ((done)*100)/areasize
+            UpdateProgress(progH,"Changing cubes..."+Str(prcnt)+"%",prcnt)
+          EndIf
+          pz = pz + 0.5
+        Wend
+        py = py + 0.5
+      Wend
+      px = px + 0.5
+    Wend
+    LockMutex(DelMutex)
+    If(FindMapElement(visibleChunks(),Str(affectedChunks()\x)+","+Str(affectedChunks()\y)))
+      deleteChunk(affectedChunks()\vis)
+      DeleteMapElement(visibleChunks())
+    EndIf
+    UnlockMutex(DelMutex)
+  Wend  ;nextChunk
+  
+  ChangeSingleBlockID(0,0,0,0,0) ;Flush last modified chunk to DB/file
+  DeleteFile(g_instaLoadDir+g_LastWorld+"/"+"chunkmeshes.sqlite")
+  closeProgress(progH)
+  ProcedureReturn 1
+EndProcedure
 ; IDE Options = PureBasic 5.72 (Windows - x64)
-; CursorPosition = 337
-; FirstLine = 333
+; CursorPosition = 617
+; FirstLine = 588
 ; Folding = -
 ; EnableXP
