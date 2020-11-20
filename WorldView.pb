@@ -8,7 +8,7 @@
 ; ------------------------------------------------------------
 ;
 
-#VERSION = "1.1.2."+#PB_Editor_BuildCount
+#VERSION = "1.1.3."+#PB_Editor_BuildCount
 
 #mode_init = -1
 #mode_normal = 0
@@ -27,7 +27,8 @@
 #BLOCKTYPE_BILLBOARD = 2
 #BLOCKTYPE_Torch = 3
 #BLOCKTYPE_MESH = 4
-#MATERIAL_BLACK = 999
+#MATERIAL_BLACK = 256
+#MATERIAL_GLASS = 257
 
 #texInd_all = 0
 
@@ -219,6 +220,7 @@ InitMouse()
 InitKeyboard()
 LoadFont(0,"Palatino Linotype",5)
 LoadFont(1,"Palatino Linotype",25)
+LoadFont(2,"Palatino Linotype",80)
 #CameraSpeed  = 1
 #CameraSpeedSlow  = 0.15
 #Acceleration = 0.05
@@ -303,6 +305,7 @@ EndIf
 AntialiasingMode(#PB_AntialiasingMode_None)
 MaterialFilteringMode(#PB_Default,#PB_Material_Anisotropic,4)
 OpenWindow(0, 0, 0, 1024, 700, "CyubE3dit", #PB_Window_SystemMenu | #PB_Window_ScreenCentered  | #WS_OVERLAPPEDWINDOW)
+AddKeyboardShortcut(0, #PB_Shortcut_Control | #PB_Shortcut_V, #menu_loadAgain)
 SetWindowState(0,#PB_Window_Maximize)
 CreateStatusBar(0,WindowID(0))
 AddStatusBarField(WindowWidth(0)/3)
@@ -561,7 +564,7 @@ Repeat
         Else
           MoveToolX = 0
           MoveToolZ = 0
-          mDeltaSnapx = 0
+          mDeltaSnapX = 0
           mDeltaSnapY = 0
         EndIf
         
@@ -585,11 +588,14 @@ Repeat
         mDeltaSnapX = mDeltaSnapX + MouseX
         zoom = MouseWheel
         If(mDeltaSnapX > SnapSize Or mDeltaSnapX < -SnapSize Or mDeltaSnapY > SnapSize Or mDeltaSnapY < -SnapSize)
-          mDeltaSnapX = mDeltaSnapX / SnapSize
-          mDeltaSnapY = mDeltaSnapY / SnapSize
           
+          noresetX = 0
+          noresetY = 0
           If KeyboardPushed(#PB_Key_LeftShift)
+            
             If g_EditMode = #mode_cut Or g_EditMode = #mode_chunksel_nodel Or g_EditMode = #mode_fill
+              mDeltaSnapX = mDeltaSnapX / SnapSize
+              mDeltaSnapY = mDeltaSnapY / SnapSize
               If(toolBox\sx  - Abs(MoveToolZ)*grid*mDeltaSnapX >= grid And toolBox\sx  - Abs(MoveToolZ) * grid * mDeltaSnapX <= #maxSchemXZ * grid And toolBox\sz  - Abs(MoveToolX) * grid * mDeltaSnapX >= grid And toolBox\sz  - Abs(MoveToolX) * grid * mDeltaSnapX <= #maxSchemXZ * grid)
                 ScaleToolBlock(toolBox\sx - Abs(MoveToolZ) * grid * mDeltaSnapX, toolBox\sy, toolBox\sz - Abs(MoveToolX)*grid*mDeltaSnapX)
                 MoveNode(#ToolBlock,0.25 * MovetoolZ*grid*mDeltaSnapX,0,-0.25*MoveToolX*grid*mDeltaSnapX,#PB_Relative)
@@ -598,15 +604,44 @@ Repeat
                 ScaleToolBlock(toolBox\sx, toolBox\sy - gridY * mDeltaSnapY,toolBox\sz)
                 MoveNode(#ToolBlock,0,-0.25*gridY*mDeltaSnapY,0,#PB_Relative)
               EndIf
+            ElseIf g_EditMode = #mode_insert
+              If mDeltaSnapY > SnapSize * 10
+                bigSnapY = 1
+              ElseIf mDeltaSnapY < -SnapSize * 10
+                bigSnapY = -1
+              Else
+                bigSnapY = 0
+                noresetY = 1
+              EndIf
+              If mDeltaSnapX > SnapSize * 10
+                bigSnapX = 1
+              ElseIf mDeltaSnapX < -SnapSize * 10
+                bigSnapX = -1
+              Else
+                bigSnapX = 0
+                noresetX = 1
+              EndIf
+              
+              MoveNode(#ToolBlock,0.5 * MoveToolZ * toolBox\sz * bigSnapX,0,-0.5 * MoveToolX * toolBox\sz * bigSnapX,#PB_Relative)
+              If(NodeY(#ToolBlock) - 0.5 * toolBox\sy * bigSnapY - toolBox\sy /4 >= 0 And NodeY(#ToolBlock) - 0.5 * toolBox\sy * bigSnapY + toolBox\sy / 4 <= 800)
+                MoveNode(#ToolBlock,0,-0.5 * toolBox\sy * bigSnapY,0,#PB_Relative)
+              EndIf
             EndIf
           Else
+            mDeltaSnapX = mDeltaSnapX / SnapSize
+            mDeltaSnapY = mDeltaSnapY / SnapSize
             MoveNode(#ToolBlock,0.5 * MoveToolZ * grid * mDeltaSnapX,0,-0.5 * MoveToolX * grid * mDeltaSnapX,#PB_Relative)
             If(NodeY(#ToolBlock) - 0.5 * gridY * mDeltaSnapY - toolBox\sy /4 >= 0 And NodeY(#ToolBlock) - 0.5 * gridY * mDeltaSnapY + toolBox\sy / 4 <= 800)
               MoveNode(#ToolBlock,0,-0.5 * gridY * mDeltaSnapY,0,#PB_Relative)
             EndIf
           EndIf
-          mDeltaSnapX = 0
-          mDeltaSnapY = 0
+          If Not noresetX
+            mDeltaSnapX = 0
+          EndIf
+          If Not noresetY
+            mDeltaSnapY = 0
+          EndIf
+          
         EndIf
         If(zoom)
           If KeyboardPushed(#PB_Key_LeftShift)
@@ -615,6 +650,8 @@ Repeat
                 ScaleToolBlock(toolBox\sx + Abs(MoveToolX)*grid*zoom,toolBox\sy,toolBox\sz + Abs(MoveToolZ)*grid*zoom)
                 MoveNode(#ToolBlock,-0.25 *grid*zoom* MoveToolX,0,-0.25 *grid*zoom* MoveToolZ,#PB_Relative)
               EndIf
+            ElseIf g_editMode = #mode_insert
+               MoveNode(#ToolBlock,-0.5 * toolBox\sx *zoom* MoveToolX,0,-0.5 * toolBox\sz * MoveToolZ,#PB_Relative)
             EndIf
           Else
             MoveNode(#ToolBlock,-0.5 *grid*zoom* MoveToolX,0,-0.5 *grid*zoom* MoveToolZ,#PB_Relative)
@@ -658,21 +695,24 @@ Repeat
       Else 
         cast = 0
       EndIf
-      If(lastcast <> cast)
+      If(lastcast <> cast And cast)
         RotateEntity(#ToolMouseover,0,90*cast,0)
         lastcast = cast
         HideEntity(#ToolMouseover,#False)
         HideEntity(#Tool_origin,#False)
-        MoveEntity(#Tool_origin,NodeX(#ToolBlock) + nx * toolBox\sx / 4  + nz  * toolBox\sx / 4,NodeY(#ToolBlock) - toolBox\sy /4,NodeZ(#ToolBlock)  + nz * toolBox\sz / 4  - nx  * toolBox\sz / 4,#PB_Absolute)
-        
         If (toolBox\sz * Abs(MoveToolX) + toolBox\sx * Abs(MoveToolZ)) < toolBox\sy
           size.f = (toolBox\sz * Abs(MoveToolX) + toolBox\sx * Abs(MoveToolZ)) * 0.1
         Else
           size = toolBox\sy * 0.1
         EndIf
         ScaleEntity(#Tool_origin,size,size,size,#PB_Absolute)
+        MoveEntity(#Tool_origin,NodeX(#ToolBlock) + nx * (toolBox\sx / 4)  + nz  *( toolBox\sx / 4),NodeY(#ToolBlock) - (toolBox\sy /4),NodeZ(#ToolBlock)  + nz * (toolBox\sz / 4)  - nx  * (toolBox\sz / 4),#PB_Absolute)
         MoveEntity(#ToolMouseover,NodeX(#ToolBlock) - nz  * toolBox\sx * 0.085,NodeY(#ToolBlock) +  toolBox\sy * 0.085,NodeZ(#ToolBlock) + nx * toolBox\sz * 0.085,#PB_Absolute)
         ScaleEntity(#ToolMouseover,Abs(nx) * toolBox\sx + Abs(nz)  * toolBox\sz + 0.1, toolBox\sy * 1.34, Abs(nx) * toolBox\sz * 1.34 + Abs(nz)  * toolBox\sx * 1.34 ,#PB_Absolute)
+      ElseIf cast = 0
+        HideEntity(#ToolMouseover,#True)
+        HideEntity(#Tool_origin,#True)
+        lastcast = 0
       EndIf
     Else
       If lastcast <> 0
@@ -783,6 +823,8 @@ Repeat
         camZoom = 0
       EndIf
     EndIf
+   
+    
   
     MoveCamera(0, KeyX+camShiftX, KeyZ+CamShiftY, KeyY+camZoom)
     
@@ -911,6 +953,8 @@ Repeat
 
    If(event = #PB_Event_Gadget)
      If EventGadget() = #BlockListIcon
+       ;SetActiveGadget(-1)
+       SetActiveWindow(0)
        If EventType() = #PB_EventType_LeftDoubleClick
 ;         
        ElseIf EventType() = #PB_EventType_LeftClick
@@ -963,7 +1007,6 @@ Repeat
 ;               Next
 ;             EndIf
 ;           EndIf
-;           
 ;         Wend
 ;         
        EndIf
@@ -1017,8 +1060,8 @@ End
 
 
 ; IDE Options = PureBasic 5.72 (Windows - x64)
-; CursorPosition = 892
-; FirstLine = 855
+; CursorPosition = 719
+; FirstLine = 688
 ; EnableXP
 ; Executable = test.exe
 ; CPU = 1

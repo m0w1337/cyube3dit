@@ -257,6 +257,7 @@ Procedure generateBlockMeshes()
     BuildMeshShadowVolume(#FaceBack)
     CreateTexture(#MATERIAL_BLACK,1,1)
     CreateMaterial(#MATERIAL_BLACK,TextureID(#MATERIAL_BLACK))
+    GetScriptMaterial(#MATERIAL_GLASS,"GlassOrb")
     CreateEntity(#LineTop,MeshID(#FaceTop),MaterialID(#MATERIAL_BLACK))
     HideEntity(#LineTop,#True)
     CreateEntity(#LineBottom,MeshID(#FaceBottom),MaterialID(#MATERIAL_BLACK))
@@ -973,21 +974,26 @@ Procedure.s ReadRegKey(OpenKey.l, SubKey.s, ValueName.s)
     RoundBox(0, 0, 450, 100, 10, 10, RGBA(0,0,0,100))
 
     If(g_ChunkLoadingPaused)
-      DrawText(10,10,"Chunkloading paused",RGBA(255,255,0,255))
+      DrawText(280,84,"Chunkloading paused",RGBA(255,255,0,255))
     EndIf
     Select mode
       Case #mode_init:
         DrawText(10,10,"Click into world to rotate view.",RGBA(255,255,255,255))
         DrawText(10,30,"WASD To move, hold Shift For fast move.",RGBA(255,255,255,255))
       Case #mode_normal:
+        If g_SchematicFile
+          DrawText(10,10,"Press Ctrl+V to insert the last schematic again.",RGBA(255,255,0,255))
+        EndIf
         DrawText(10,30,Str(MapSize(meshIDs()))+" Chunks displaying of '"+g_LastWorld+"'",RGBA(200,200,200,255))
         DrawText(10,50,"Position: X="+StrF(CameraX(0),1)+"m Y="+StrF(CameraZ(0),1)+"m z="+StrF(CameraY(0),1)+"m ",RGBA(200,200,200,255))
          DrawText(10,70,"Currently within Chunk ID "+Str(currChunk),RGBA(200,200,200,255))
-      Case #mode_insert:
+       Case #mode_insert:
+        DrawText(10,10,"Shift-Drag to move in steps of the size of the schematic",RGBA(255,255,255,255))
         DrawText(10,30,"Press ESC to stop inserting schematic block",RGBA(255,255,255,255))
         DrawText(10,50,"Press Enter to update position (nothing will be written to your world yet)",RGBA(255,255,255,255))
         DrawText(10,70,"Press ctrl+S to write changes to the world.",RGBA(255,255,255,255))     
       Case #mode_cut:
+        DrawText(10,10,Str(toolBox\sx)+"x"+Str(toolBox\sz)+"x"+Str(toolBox\sy)+" Blocks selected ("+Str((toolBox\sy/2)*(toolbox\sy/2)*(toolbox\sz/2))+"m³)",RGBA(255,255,255,255))
         DrawText(10,30,"Drag the Block to move, Shift Drag to resize.",RGBA(255,255,255,255))
         DrawText(10,50,"Press Enter to generate schematic file of selected block.",RGBA(50,200,50,255))
         DrawText(10,70,"Press ESC to stop selecting a block to save.",RGBA(255,150,0,255))
@@ -995,6 +1001,11 @@ Procedure.s ReadRegKey(OpenKey.l, SubKey.s, ValueName.s)
         DrawText(10,30,"Drag the Block to move, Shift Drag to resize.",RGBA(255,255,255,255))
         DrawText(10,50,"Press ENTER to confirm selection and continue.",RGBA(50,200,50,255))
         DrawText(10,70,"Press ESC to discard this selection.",RGBA(255,150,0,255))
+      Case #mode_fill:
+        DrawText(10,10,Str(toolBox\sx)+"x"+Str(toolBox\sz)+"x"+Str(toolBox\sy)+" Blocks selected ("+Str((toolBox\sy/2)*(toolbox\sy/2)*(toolbox\sz/2))+"m³)",RGBA(255,255,255,255))
+        DrawText(10,30,"Drag the Block to move, Shift Drag to resize.",RGBA(255,255,255,255))
+        DrawText(10,50,"Press ENTER to fill the selection and continue.",RGBA(50,200,50,255))
+        DrawText(10,70,"Press ESC to stop placing blocks.",RGBA(255,150,0,255))
     EndSelect
     StopDrawing()  
   EndProcedure
@@ -1003,11 +1014,12 @@ Procedure.s ReadRegKey(OpenKey.l, SubKey.s, ValueName.s)
 Procedure initBlockSubstWindow()
   OpenWindow(#BSubstWind,0,0,250,750,"Block selection",#PB_Window_WindowCentered | #PB_Window_Tool | #PB_Window_BorderLess,WindowID(0))
   ResizeWindow(#BSubstWind, WindowX(0,#PB_Window_InnerCoordinate), WindowY(#BSubstWind,#PB_Window_InnerCoordinate)+20, #PB_Ignore, #PB_Ignore)
-  ListIconGadget(#BlockListIcon,0,0,250,750,"Block",250,#PB_ListIcon_FullRowSelect)
+  ListIconGadget(#BlockListIcon,0,0,250,750,"Block",250,#PB_ListIcon_FullRowSelect| #PB_ListIcon_AlwaysShowSelection)
   ;AddGadgetColumn(#BlockListIcon,1,"Substituted Block",125)
   BlockListIconIL = ImageList_Create_(#blockPrevSize,#blockPrevSize,#ILC_COLOR32| #ILC_MASK, 0, 100)
   SendMessage_(GadgetID(#BlockListIcon), #LVM_SETIMAGELIST, #LVSIL_SMALL, BlockListIconIL)
   StickyWindow(#BSubstWind, #True) 
+  SetActiveWindow(0)
 EndProcedure
 
 Procedure AddBlockToList(text.s,id,cid)
@@ -1023,7 +1035,7 @@ Procedure AddBlockToList(text.s,id,cid)
       icon = CopyImage_(ImageID(img),#IMAGE_BITMAP,#blockPrevSize,#blockPrevSize,0)
       ImageList_Add_(BlockListIconIL,icon,0)
     Else
-      ImageList_Add_(BlockListIconIL,ImageID(CreateImage(#PB_Any,#blockPrevSize,#blockPrevSize,32,RGB(255,0,255))),0)
+      ImageList_Add_(BlockListIconIL,ImageID(CreateImage(#PB_Any,#blockPrevSize,#blockPrevSize,32,RGB(200,200,200))),0)
     EndIf
   ElseIf id <> 66
     img = LoadImage(#PB_Any,GetLApplicationDataDirectory()+"CyubE3dit\block_prev\"+Str(id)+".png")
@@ -1140,6 +1152,11 @@ Procedure StopEditing()
       FreeStaticGeometry(schGeo\id)
     EndIf
     ClearList(SchBlocks())
+    If IsWindow(#BSubstWind)
+      CloseWindow(#BSubstWind)
+      ImageList_Destroy_(BlockListIconIL)
+      ClearList(BlockListIcon())
+    EndIf
   EndIf
 EndProcedure
 
@@ -1232,13 +1249,16 @@ Procedure initToolBlock()
   MaterialCullingMode(#Marker_green,#PB_Material_NoCulling)
   
   LoadTexture(#ToolBlock,"Toolblock.png")
-  LoadTexture(#ToolBlock_act,"Toolblock_act.png")
   CreateMaterial(#ToolBlock,TextureID(#ToolBlock))
-  CreateMaterial(#ToolBlock_act,TextureID(#ToolBlock_act))
   MaterialBlendingMode(#ToolBlock, #PB_Material_AlphaBlend)
-  MaterialBlendingMode(#ToolBlock_act, #PB_Material_AlphaBlend)
   MaterialCullingMode(#ToolBlock,#PB_Material_NoCulling)
-  MaterialCullingMode(#ToolBlock_act,#PB_Material_NoCulling)
+  CreateTexture(#ToolMouseover,1024,1024)
+  CreateMaterial(#ToolMouseover,TextureID(#ToolMouseover))
+  MaterialFilteringMode(#ToolMouseover,#PB_Material_None)
+  MaterialBlendingMode(#ToolMouseover,#PB_Material_AlphaBlend)
+  DisableMaterialLighting(#ToolMouseover, #True)
+  CreateEntity(#ToolMouseover,MeshID(#FaceLeft+i),MaterialID(#ToolMouseover),0,0,0,1)
+  EntityRenderMode(#ToolMouseover, #PB_Shadow_None)
   
   setToolBlocktype(0)
   MaterialShadingMode(#TopFillerMesh,#PB_Material_Flat)
@@ -1264,21 +1284,8 @@ Procedure initToolBlock()
   MaterialShadingMode(#BackFillerMesh,#PB_Material_Flat)
   MaterialFog(#BackFillerMesh,$FFFFFF,1,0,300)
   SetMaterialColor(#BackFillerMesh, #PB_Material_DiffuseColor, RGBA(100,200,100,255))
-  
-  CreateTexture(#ToolMouseover,1024,1024)
-  StartDrawing(TextureOutput(#ToolMouseover))
-  DrawingMode(#PB_2DDrawing_AlphaBlend)
-  Box(0,0,1024,1024,$00000000)
-  DrawAlphaImage(ImageID(LoadImage(#PB_Any,"./Textures/toolblock_act.png")),0,0)
-  StopDrawing()
-  CreateMaterial(#ToolMouseover,TextureID(#ToolMouseover))
-  MaterialFilteringMode(#ToolMouseover,#PB_Material_None)
-  MaterialBlendingMode(#ToolMouseover,#PB_Material_AlphaBlend)
-  DisableMaterialLighting(#ToolMouseover, #True)
-  CreateEntity(#ToolMouseover,MeshID(#FaceLeft+i),MaterialID(#ToolMouseover),0,0,0,1)
-  EntityRenderMode(#ToolMouseover, #PB_Shadow_None)
   CreateSphere(#Tool_origin,0.4)
-  CreateEntity(#Tool_origin,MeshID(#Tool_origin),MaterialID(#MATERIAL_BLACK))
+  CreateEntity(#Tool_origin,MeshID(#Tool_origin),MaterialID(#MATERIAL_GLASS))
   HideEntity(#Tool_origin,#True)
   HideEntity(#ToolMouseover,#True)
 EndProcedure
@@ -1300,6 +1307,19 @@ Procedure ScaleToolBlock(sx.f,sy.f,sz.f)
   sx+0.03
   sy+0.03
   sz+0.03
+  nz = EntityDirectionX(#ToolMouseover)
+  nx = EntityDirectionZ(#ToolMouseover)
+  StartDrawing(TextureOutput(#ToolMouseover))
+  DrawingMode(#PB_2DDrawing_AlphaChannel)
+  Box(0,0,1024,1024,$00000000)
+  DrawingMode(#PB_2DDrawing_AlphaBlend | #PB_2DDrawing_Transparent)
+  DrawAlphaImage(ImageID(LoadImage(#PB_Any,"./Textures/toolblock_act.png")),0,0)
+  DrawingFont(FontID(2))
+  info.s = "<---- "+Str(Abs(nx) * toolBox\sz + Abs(nz)  * toolBox\sx)+" --->"
+  DrawText(256 + 384 - TextWidth(info) / 2, 120,info,RGBA(0,0,0,255))
+  info = "<---- "+Str(toolBox\sy)+" --->"
+  DrawRotatedText(120, 256 + 384 + TextWidth(info) / 2, info,90,RGBA(0,0,0,255))
+  StopDrawing()
 
   CreatePlane(#TopFillerMesh, 0.5*sz, 0.5*sx, 1, 1, toolBox\sz, toolBox\sx)
   CreateEntity(#TopFillerMesh,MeshID(#TopFillerMesh),MaterialID(#TopFillerMesh),0,sy/4,0)
@@ -1353,7 +1373,7 @@ EndProcedure
 
   
 ; IDE Options = PureBasic 5.72 (Windows - x64)
-; CursorPosition = 474
-; FirstLine = 474
+; CursorPosition = 1037
+; FirstLine = 1021
 ; Folding = ------
 ; EnableXP

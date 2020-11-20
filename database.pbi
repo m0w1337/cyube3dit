@@ -164,7 +164,7 @@ Procedure addCustomBlock(cID,async=1)
 EndProcedure
 
 ; IDE Options = PureBasic 5.72 (Windows - x64)
-; CursorPosition = 162
-; FirstLine = 111
+; CursorPosition = 30
+; FirstLine = 22
 ; Folding = --
 ; EnableXP

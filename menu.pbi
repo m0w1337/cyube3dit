@@ -1,6 +1,7 @@
 ﻿#menu_load = 0
 #menu_save = 1
 #menu_quit = 2
+#menu_loadAgain = 3
 
 #menu_chunkBorders = 10
 #menu_setPPos = 11
@@ -18,6 +19,8 @@
 #menu_del_only = 23
 #menu_nolocalmods = 24
 #menu_fillWithBlocks = 25
+#menu_copyFilesToDB = 26
+#menu_lastEntry = 26
 
 
 #Font_about_title = 10
@@ -42,9 +45,11 @@ Procedure CreateMenuEntries()
   
   CreateMenu(0, WindowID(0))
   MenuTitle("File")
-  MenuItem(#menu_load, "Load Schematic")
-  MenuItem(#menu_save, "Save Schematic Cube")
-  MenuItem(#menu_fillWithBlocks,"Fill Area with Blocks")
+  MenuItem(#menu_save, "Save Schematic Cube (COPY)")
+  MenuItem(#menu_load, "Load Schematic (PASTE)")
+  MenuItem(#menu_fillWithBlocks,"Fill Area with Blocks (FILL)")
+  MenuBar() 
+  MenuItem(#menu_copyFilesToDB,"Copy chunkfiles to Database and delete them.")
   OpenSubMenu("Chunk deletion")
   MenuItem(#menu_define_marker,"Add a marker area")
   MenuItem(#menu_remove_marker,"Remove all markers")
@@ -53,6 +58,7 @@ Procedure CreateMenuEntries()
   CloseSubMenu()
   MenuItem(#menu_nolocalmods, "Do not share information about my mods directoy (Only sync workshop blocks).")
   SetMenuItemState(0,#menu_nolocalmods,g_noLocalMods)
+  MenuBar() 
   MenuItem(#menu_quit, "Quit")
   MenuTitle("World")
   OpenSubMenu("Active World")
@@ -74,6 +80,7 @@ Procedure CreateMenuEntries()
   SetMenuItemState(0,#menu_chunkBorders,g_chunkborders)
   MenuItem(#menu_narrowHeight, "Narrow Render Height")
   SetMenuItemState(0,#menu_narrowHeight,g_restrictHeight)
+  MenuBar() 
   OpenSubMenu("Shadows")
   MenuItem(#menu_shadows_none, "None")
   MenuItem(#menu_shadows_simple, "Simple")
@@ -124,7 +131,7 @@ Procedure CreateMenuEntries()
  
  Procedure DisableMenuInteraction(state)
    Shared Worlds()
-   For i=0 To 25
+   For i=0 To #menu_lastEntry
      DisableMenuItem(0,i,state)
    Next
    PushListPosition(worlds())
@@ -210,7 +217,46 @@ Procedure HandleMenuEvents(evMenu)
             EndIf
             updateMsgBox(g_EditMode, currentchunk\vis)
           EndIf
+        Case #menu_loadAgain:
+           If g_SchematicFile And g_EditMode = #mode_normal
+            setToolBlocktype(-1)
+            g_EditMode = #mode_insert
+            If toolBox\y1 < 0  ;Make sure the inserted schematic is spawned within Y boundaries!!!
+              MoveNode(#ToolBlock,0,-toolBox\y1+4,0,#PB_Relative)
+            ElseIf toolBox\y1 + toolBox\sy / 2 > 800
+              MoveNode(#ToolBlock,0,796 - (toolBox\y1 + toolBox\sy / 2),0,#PB_Relative)
+            EndIf
+            toolBox\x1 = NodeX(#ToolBlock) - (toolBox\sx-1)/4
+            toolBox\y1 = NodeY(#ToolBlock) - (toolBox\sy-1)/4
+            toolBox\z1 = NodeZ(#ToolBlock) - (toolBox\sz-1)/4
+            OpenProgress(progH.phnd, "Loading Cyube Schematic...", "Optimizing blocks...")
+            prog.int
+            schThread = CreateThread(@displayCYSchematic(),@prog)
+            While IsThread(schThread)
+              LockMutex(ProgMutex)
+              progress = prog\i
+              UnlockMutex(ProgMutex)
+              UpdateProgress(progH,"Optimizing mesh..."+Str(progress)+"%",progress)
+              ZoomToolBlock(progress / 100,progress / 100,progress / 100)
+              RenderWorld()
+              FlipBuffers()
+            Wend
+            ZoomToolBlock(1,1,1)
+            CloseProgress(progH)
+            If ListSize(SchBlocks())
+              g_UpdateSchGeo = 1
+            EndIf
+            
+            If(g_UpdateSchGeo)
+              WorldShadows(#PB_Shadow_None)
+            Else
+              g_EditMode = #mode_normal
+              HideToolBlock()
+            EndIf
+            updateMsgBox(g_EditMode, currentchunk\vis)
+          EndIf
         Case #menu_save:
+          g_SchematicFile = ""
           g_EditMode = #mode_cut
           If(IsStaticGeometry(schGeo\id))
             WorldShadows(g_Shadows)
@@ -224,6 +270,7 @@ Procedure HandleMenuEvents(evMenu)
           CameraFollow(0,NodeID(#ToolBlock),0,0,1,1,0)
           updateMsgBox(g_EditMode, currentchunk\vis)
         Case #menu_fillWithBlocks:
+          g_SchematicFile = ""
           initBlockSubstWindow()
           For i=0 To 255
             If SBlocks(i)\mode > 0 And SBlocks(i)\mode < 4
@@ -339,6 +386,7 @@ Procedure HandleMenuEvents(evMenu)
           g_EditMode = #mode_normal
           HideToolBlock()
         Case #menu_del_only:
+          g_SchematicFile = ""
           If g_EditMode = #mode_chunksel_nodel
             MessageRequester("Attention","There is a marker selection, that is not yet confirmed, please finish the selection first, by either confirming (Enter) or deleting (Escape) the current selection.")
           Else
@@ -383,6 +431,7 @@ Procedure HandleMenuEvents(evMenu)
             HideToolBlock()
           EndIf
         Case #menu_del_except:
+          g_SchematicFile = ""
           If g_EditMode = #mode_chunksel_nodel
             MessageRequester("Attention","There is a marker selection, that is not yet confirmed, please finish the selection first, by either confirming (Enter) or deleting (Escape) the current selection.")
           Else
@@ -446,7 +495,143 @@ Procedure HandleMenuEvents(evMenu)
             g_EditMode = #mode_normal
             HideToolBlock()
           EndIf
-          
+        Case #menu_copyFilesToDB:
+          If MessageRequester("Attention", "Would you really like To copy all single chunk files into the sqlite database? It is recommended to do a backup of your world before this!",#PB_MessageRequester_YesNo) = #PB_MessageRequester_Yes
+            db = OpenDatabase(#PB_Any, g_saveDir+g_LastWorld+"/"+"chunkdata.sqlite", "", "",#PB_Database_SQLite)
+            filecount = 0
+            currfile = 0
+            existing = 0
+            If(db)
+              dir = ExamineDirectory(#PB_Any,g_saveDir+g_LastWorld+"/","*.*")
+              If dir
+                While NextDirectoryEntry(dir)
+                  If GetExtensionPart(DirectoryEntryName(dir)) = "chunks" Or GetExtensionPart(DirectoryEntryName(dir)) = "chunkmon"
+                    filecount+1
+                  EndIf
+                Wend
+                FinishDirectory(dir)
+              EndIf
+              OpenProgress(progH.phnd, "Copy Chunkdata...", "Copy old chunkdata into database...")
+              dir = ExamineDirectory(#PB_Any,g_saveDir+g_LastWorld+"/","*.chunks")
+              If dir
+                While NextDirectoryEntry(dir)
+                  If GetExtensionPart(DirectoryEntryName(dir)) = "chunks"
+                    currfile + 1
+                    progress = (currfile * 100) / filecount
+                    UpdateProgress(progH,"Copy Chunks into database..."+Str(progress)+"%",progress)
+                    chnk = ReadFile(#PB_Any,g_saveDir+g_LastWorld+"/"+DirectoryEntryName(dir),#PB_File_SharedRead)
+                    If chnk
+                      id = Val(GetFilePart(DirectoryEntryName(dir),#PB_FileSystem_NoExtension))
+                      If DatabaseQuery(db,"SELECT CHUNKID from CHUNKDATA WHERE CHUNKID = "+Str(id)+";")
+                        entry = FirstDatabaseRow(db)
+                        FinishDatabaseQuery(db)
+                        If Not entry
+                          *chnkmem = AllocateMemory(Lof(chnk))
+                          FileSeek(chnk,0)
+                          ReadData(chnk,*chnkmem,Lof(chnk))
+                          SetDatabaseBlob(db,0,*chnkmem,Lof(chnk))
+                          CloseFile(chnk)
+                          If CheckDatabaseUpdate(db, "INSERT INTO CHUNKDATA (CHUNKID, DATA) VALUES ("+Str(id)+", ?);")
+                            DeleteFile(g_saveDir+g_LastWorld+"/"+DirectoryEntryName(dir))
+                          Else
+                            MessageRequester("Warning","Chunk with ID "+Str(id)+" could not be copied, operation aborted!")
+                            CloseDatabase(db)
+                            FinishDirectory(dir)
+                            CloseProgress(progH)
+                            ProcedureReturn 0
+                          EndIf
+                        Else
+                          CloseFile(chnk)
+                          existing+1
+                        EndIf
+                      Else
+                        MessageRequester("Warning","The check if exists query failed on chunk ID "+Str(id)+", operation aborted!")
+                        CloseDatabase(db)
+                        FinishDirectory(dir)
+                        CloseProgress(progH)
+                        ProcedureReturn 0
+                      EndIf
+                    Else
+                      MessageRequester("Warning","Chunk with ID "+Str(id)+" could not be opened, operation aborted!")
+                      CloseDatabase(db)
+                      FinishDirectory(dir)
+                      CloseProgress(progH)
+                      ProcedureReturn 0
+                    EndIf
+                  EndIf
+                Wend
+                FinishDirectory(dir)
+              EndIf
+              dir = ExamineDirectory(#PB_Any,g_saveDir+g_LastWorld+"/","*.chunkmon")
+              If dir
+                While NextDirectoryEntry(dir)
+                  If GetExtensionPart(DirectoryEntryName(dir)) = "chunkmon"
+                    currfile + 1
+                    progress = (currfile * 100) / filecount
+                    UpdateProgress(progH,"Copy Chunk Meshes into database..."+Str(progress)+"%",progress)
+                    chnk = ReadFile(#PB_Any,g_saveDir+g_LastWorld+"/"+DirectoryEntryName(dir),#PB_File_SharedRead)
+                    If chnk
+                      id = Val(GetFilePart(DirectoryEntryName(dir),#PB_FileSystem_NoExtension))
+                      If DatabaseQuery(db,"SELECT CHUNKID from MESHOBJECTS WHERE CHUNKID = "+Str(id)+";")
+                        entry = FirstDatabaseRow(db)
+                        FinishDatabaseQuery(db)
+                        If Not entry
+                          *chnkmem = AllocateMemory(Lof(chnk))
+                          FileSeek(chnk,0)
+                          ReadData(chnk,*chnkmem,Lof(chnk))
+                          SetDatabaseBlob(db,0,*chnkmem,Lof(chnk))
+                          CloseFile(chnk)
+                          If CheckDatabaseUpdate(db, "INSERT INTO MESHOBJECTS (CHUNKID,DATA) VALUES ("+Str(id)+", ?);")
+                            DeleteFile(g_saveDir+g_LastWorld+"/"+DirectoryEntryName(dir))
+                          Else
+                            MessageRequester("Warning","Meshes of Chunk with ID "+Str(id)+" could not be copied, operation aborted!")
+                            CloseDatabase(db)
+                            FinishDirectory(dir)
+                            CloseProgress(progH)
+                            ProcedureReturn 0
+                          EndIf
+                        Else
+                          CloseFile(chnk)
+                          existing+1
+                        EndIf
+                      Else
+                        MessageRequester("Warning","The check if exists query failed on chunk ID "+Str(id)+", operation aborted!")
+                        CloseDatabase(db)
+                        FinishDirectory(dir)
+                        CloseProgress(progH)
+                        ProcedureReturn 0
+                      EndIf
+                    Else
+                      MessageRequester("Warning","Meshes of Chunk with ID "+Str(id)+" could not be opened, operation aborted!")
+                      CloseDatabase(db)
+                      FinishDirectory(dir)
+                      CloseProgress(progH)
+                      ProcedureReturn 0
+                    EndIf
+                  EndIf
+                Wend
+                FinishDirectory(dir)
+              EndIf
+              CloseProgress(progH)
+              CloseDatabase(db)
+              If existing
+                If MessageRequester("Leftover files","There are "+Str(existing)+" files left over, they were copied already by the game, should they be removed as well?",#PB_MessageRequester_YesNo) = #PB_MessageRequester_Yes
+                  dir = ExamineDirectory(#PB_Any,g_saveDir+g_LastWorld+"/","*.*")
+                  If dir
+                    While NextDirectoryEntry(dir)
+                      If GetExtensionPart(DirectoryEntryName(dir)) = "chunks" Or GetExtensionPart(DirectoryEntryName(dir)) = "chunkmon"
+                        DeleteFile(g_saveDir+g_LastWorld+"/"+DirectoryEntryName(dir))
+                      EndIf
+                    Wend
+                    FinishDirectory(dir)
+                  EndIf
+                EndIf
+              EndIf
+              MessageRequester("Done!","All done, please check, if everything is OK before getting rid of your Backup :)")
+            Else
+              MessageRequester("Impossible","There is currently no database for this world, please open the world at least once with the current CyubeVR Version before running this operation.")
+            EndIf
+          EndIf
         Case 90:
           RunProgram("http://cyube3dit.el-wa.org/index.php?action=quickstart", "", "")
         Case 91:
@@ -477,7 +662,7 @@ Procedure HandleMenuEvents(evMenu)
   EndProcedure
   
 ; IDE Options = PureBasic 5.72 (Windows - x64)
-; CursorPosition = 242
-; FirstLine = 225
+; CursorPosition = 255
+; FirstLine = 216
 ; Folding = -
 ; EnableXP
