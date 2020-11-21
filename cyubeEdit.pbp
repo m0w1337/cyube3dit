@@ -7,7 +7,7 @@
   <section name="data">
     <explorer view="" pattern="0"/>
     <log show="1"/>
-    <lastopen date="2020-11-20 11:10" user="m0" host="DESKTOP-3MN1198"/>
+    <lastopen date="2020-11-21 12:53" user="m0" host="DESKTOP-3MN1198"/>
   </section>
   <section name="files">
     <file name="AsyncRenderer.pbi">
@@ -32,7 +32,7 @@
     </file>
     <file name="Helper.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="05842ffb707844a1aca45b354d5426e0"/>
+      <fingerprint md5="781aa57054dc2eac27ec9933f56bf51c"/>
     </file>
     <file name="loadCustomBlocks.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
@@ -48,7 +48,7 @@
     </file>
     <file name="menu.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="0608c6600eac4815466e398a966eb2f3"/>
+      <fingerprint md5="f3d35e98616a73015ec7df10abc0a123"/>
     </file>
     <file name="SaveSchematic.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
@@ -56,7 +56,7 @@
     </file>
     <file name="WorldView.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="d0f672d67be28e65ee82af28d2289af2"/>
+      <fingerprint md5="28f83de12b1ee9296b1a0dbef2ef7f68"/>
     </file>
   </section>
   <section name="targets">
@@ -66,8 +66,8 @@
       <executable value="Package\CyubeEdit.exe"/>
       <options thread="1" xpskin="1"/>
       <temporaryexe value="source"/>
-      <compilecount enable="1" value="1956"/>
-      <buildcount enable="1" value="48"/>
+      <compilecount enable="1" value="1985"/>
+      <buildcount enable="1" value="50"/>
       <versioninfo enable="1">
         <field0 value="1,1,3,%BUILDCOUNT"/>
         <field1 value="1,1,3,%BUILDCOUNT"/>

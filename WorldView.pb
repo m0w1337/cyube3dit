@@ -1060,8 +1060,8 @@ End
 
 
 ; IDE Options = PureBasic 5.72 (Windows - x64)
-; CursorPosition = 719
-; FirstLine = 688
+; CursorPosition = 299
+; FirstLine = 284
 ; EnableXP
 ; Executable = test.exe
 ; CPU = 1

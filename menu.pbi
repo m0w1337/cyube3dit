@@ -312,7 +312,12 @@ Procedure HandleMenuEvents(evMenu)
         Case #menu_setPPos:
           If MessageRequester("Info","This will update the in game player position to the current camera position. Please make sure you dont bake yourself in solid Rock."+Chr(10)+Chr(13)+"Do it?",#PB_MessageRequester_YesNo) = #PB_MessageRequester_Yes
             WritePlayerPos(g_saveDir+g_LastWorld+"/",CameraX(0),CameraY(0),CameraZ(0))
+            playerpos\x = CameraX(0)
+            playerpos\z = CameraY(0)
+            playerpos\y = CameraZ(0)
+            MoveStart(@playerpos)
             MessageRequester("Info","OK, prepare yourself to wake up in foreign lands...")
+            
           EndIf
         Case #menu_narrowHeight:
           If g_restrictHeight
@@ -662,7 +667,7 @@ Procedure HandleMenuEvents(evMenu)
   EndProcedure
   
 ; IDE Options = PureBasic 5.72 (Windows - x64)
-; CursorPosition = 255
-; FirstLine = 216
+; CursorPosition = 316
+; FirstLine = 287
 ; Folding = -
 ; EnableXP

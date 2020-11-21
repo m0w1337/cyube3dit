@@ -40,6 +40,9 @@
 #FillerMesh = 1023
 #ToolMouseover = 1024
 #Tool_origin = 1025
+
+#playerMat = 1026
+
 Structure pHnd
   wind.i
   progbar.i
@@ -870,6 +873,18 @@ Procedure LoadBlocks(Array blockArr.SBlocks(1), Map ABlockMap.SBlocks())
 EndProcedure
 
 Procedure MoveStart(*playerpos.pos)
+  If IsBillboardGroup(0)
+    FreeBillboardGroup(0)
+  EndIf
+  If Not IsMaterial(#PlayerMat)
+    CreateMaterial(#PlayerMat,TextureID(LoadTexture(#PB_Any,"player.png")))
+    MaterialBlendingMode(#PlayerMat, #PB_Material_AlphaBlend)
+    MaterialCullingMode(#PlayerMat,#PB_Material_NoCulling)
+    DisableMaterialLighting(#playerMat, #True)
+  EndIf
+  CreateBillboardGroup(0,MaterialID(#PlayerMat),0.7,0.7,*playerpos\x, *playerpos\z, *playerpos\y)
+  AddBillboard(0,0,0,0)
+  MoveBillboardGroup(0,*playerpos\x, *playerpos\z, *playerpos\y,#PB_Absolute)
   If IsLight(0)
     MoveLight(0,*playerpos\x-100, *playerpos\z+300, *playerpos\y-200)
   Else
@@ -1373,7 +1388,7 @@ EndProcedure
 
   
 ; IDE Options = PureBasic 5.72 (Windows - x64)
-; CursorPosition = 1037
-; FirstLine = 1021
+; CursorPosition = 884
+; FirstLine = 860
 ; Folding = ------
 ; EnableXP
