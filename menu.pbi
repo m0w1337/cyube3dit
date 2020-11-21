@@ -667,7 +667,7 @@ Procedure HandleMenuEvents(evMenu)
   EndProcedure
   
 ; IDE Options = PureBasic 5.72 (Windows - x64)
-; CursorPosition = 316
-; FirstLine = 287
+; CursorPosition = 153
+; FirstLine = 141
 ; Folding = -
 ; EnableXP

@@ -218,6 +218,7 @@ UsePNGImageDecoder()
 UsePNGImageEncoder()
 InitMouse()
 InitKeyboard()
+KeyboardMode(#PB_Keyboard_AllowSystemKeys)
 LoadFont(0,"Palatino Linotype",5)
 LoadFont(1,"Palatino Linotype",25)
 LoadFont(2,"Palatino Linotype",80)
@@ -726,7 +727,8 @@ Repeat
     moveDelta.f = ElapsedMilliseconds() - lastmove.q
     lastmove = ElapsedMilliseconds()
     movedelta = movedelta / 10
-
+    
+    
     If KeyboardPushed(#PB_Key_A) Or KeyboardPushed(#PB_Key_Left)
       If AccX < #AccelerationMax
         AccX + #Acceleration
@@ -751,7 +753,10 @@ Repeat
     EndIf
     
     
-    If KeyboardPushed(#PB_Key_W)
+    If KeyboardPushed(#PB_Key_W) Or KeyboardPushed(#PB_Key_Up)
+      If(KeyboardPushed(#PB_Key_W))
+        noYmovement = 1
+      EndIf
       If AccY < #AccelerationMax
         AccY + #Acceleration
       EndIf
@@ -760,7 +765,10 @@ Repeat
       Else
         KeyY = -#CameraSpeedSlow * movedelta * AccY
       EndIf
-    ElseIf KeyboardPushed(#PB_Key_S)
+    ElseIf KeyboardPushed(#PB_Key_S) Or KeyboardPushed(#PB_Key_Down)
+      If(KeyboardPushed(#PB_Key_S))
+        noYmovement = 1
+      EndIf
       If AccY < #AccelerationMax
         AccY + #Acceleration
       EndIf
@@ -788,7 +796,7 @@ Repeat
       AccY = 0
     EndIf
     
-    If(KeyboardPushed(#PB_Key_Up))  Or KeyboardPushed(#PB_Key_R)  Or KeyboardPushed(#PB_Key_E)
+    If KeyboardPushed(#PB_Key_R)  Or KeyboardPushed(#PB_Key_E) Or KeyboardPushed(#PB_Key_PageUp)
       If AccZ < #AccelerationMax
         AccZ + #Acceleration
       EndIf
@@ -797,7 +805,7 @@ Repeat
       Else
         CamShiftY = #CameraSpeedSlow * movedelta * AccZ
       EndIf
-    ElseIf(KeyboardPushed(#PB_Key_Down))  Or KeyboardPushed(#PB_Key_F)
+    ElseIf KeyboardPushed(#PB_Key_F) Or KeyboardPushed(#PB_Key_PageDown)
       If AccZ < #AccelerationMax
         AccZ + #Acceleration
       EndIf
@@ -810,6 +818,10 @@ Repeat
       AccZ = 0
     EndIf
     RotateCamera(0, camRotY, camRotX, 0, #PB_Relative)
+     If CameraDirectionY(0) < -0.9 Or CameraDirectionY(0) > 0.9       
+       RotateCamera(0, -camRotY, 0, 0, #PB_Relative)
+     EndIf
+    
     If g_EditMode = #mode_cut
       If KeyY Or camZoom
         distance = CamDistance3D(0,NodeX(#ToolBlock),NodeY(#ToolBlock),NodeZ(#ToolBlock))
@@ -824,9 +836,17 @@ Repeat
       EndIf
     EndIf
    
+    If noYmovement
+      MoveCamera(0, -(KeyY+camZoom) * CameraDirectionX(0), CamShiftY, -(KeyY+camZoom) * CameraDirectionZ(0),#PB_World)
+      MoveCamera(0, KeyX+camShiftX, KeyZ, 0)
+      noYmovement = 0
+    Else
+      MoveCamera(0, KeyX+camShiftX, KeyZ, KeyY+camZoom)
+      MoveCamera(0,0,camShiftY,0,#PB_World)
+    EndIf
     
   
-    MoveCamera(0, KeyX+camShiftX, KeyZ+CamShiftY, KeyY+camZoom)
+  
     
   If(CameraY(0) > 450)
     MoveCamera(0, CameraX(0), 450, CameraZ(0),#PB_Absolute)
@@ -1060,8 +1080,8 @@ End
 
 
 ; IDE Options = PureBasic 5.72 (Windows - x64)
-; CursorPosition = 299
-; FirstLine = 284
+; CursorPosition = 763
+; FirstLine = 732
 ; EnableXP
 ; Executable = test.exe
 ; CPU = 1
