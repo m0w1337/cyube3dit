@@ -7,7 +7,7 @@
   <section name="data">
     <explorer view="" pattern="0"/>
     <log show="1"/>
-    <lastopen date="2020-11-21 20:48" user="m0" host="DESKTOP-3MN1198"/>
+    <lastopen date="2020-11-21 22:11" user="m0" host="DESKTOP-3MN1198"/>
   </section>
   <section name="files">
     <file name="AsyncRenderer.pbi">
@@ -32,7 +32,7 @@
     </file>
     <file name="Helper.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="0660ca0c8ad2dcc07cd705014fb3db9e"/>
+      <fingerprint md5="943b7c3ff94cf8bbbe0507dbd8867459"/>
     </file>
     <file name="loadCustomBlocks.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
@@ -44,11 +44,11 @@
     </file>
     <file name="manipulateChunk.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="d55d9f75ad75e1a4b662ef2f2b71f8ac"/>
+      <fingerprint md5="e9b2f0d337b19dd34aaec9ae23c3f9dc"/>
     </file>
     <file name="menu.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="f3d35e98616a73015ec7df10abc0a123"/>
+      <fingerprint md5="0b4e9adbe06c2442ee76438c52b6fcc5"/>
     </file>
     <file name="SaveSchematic.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
@@ -56,7 +56,7 @@
     </file>
     <file name="WorldView.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="eaef252b791db29005fcb184bb67ab68"/>
+      <fingerprint md5="389fde7dcc2f40cb18316d9769aa5ea8"/>
     </file>
   </section>
   <section name="targets">
@@ -66,15 +66,15 @@
       <executable value="Package\CyubeEdit.exe"/>
       <options thread="1" xpskin="1"/>
       <temporaryexe value="source"/>
-      <compilecount enable="1" value="2027"/>
-      <buildcount enable="1" value="50"/>
+      <compilecount enable="1" value="2030"/>
+      <buildcount enable="1" value="52"/>
       <versioninfo enable="1">
-        <field0 value="1,1,3,%BUILDCOUNT"/>
-        <field1 value="1,1,3,%BUILDCOUNT"/>
+        <field0 value="1,1,4,%BUILDCOUNT"/>
+        <field1 value="1,1,4,%BUILDCOUNT"/>
         <field2 value="Moritz Wagner"/>
         <field3 value="CyubeEdit"/>
-        <field4 value="1,1,3,%BUILDCOUNT"/>
-        <field5 value="1,1,3,%BUILDCOUNT"/>
+        <field4 value="1,1,4,%BUILDCOUNT"/>
+        <field5 value="1,1,4,%BUILDCOUNT"/>
         <field6 value="CyubE3dit"/>
         <field7 value="CyubE3dit"/>
         <field8 value="CyubE3dit"/>

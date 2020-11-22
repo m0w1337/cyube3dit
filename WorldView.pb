@@ -8,7 +8,7 @@
 ; ------------------------------------------------------------
 ;
 
-#VERSION = "1.1.3."+#PB_Editor_BuildCount
+#VERSION = "1.1.5."+#PB_Editor_BuildCount
 
 #mode_init = -1
 #mode_normal = 0
@@ -218,7 +218,7 @@ UsePNGImageDecoder()
 UsePNGImageEncoder()
 InitMouse()
 InitKeyboard()
-KeyboardMode(#PB_Keyboard_AllowSystemKeys)
+
 LoadFont(0,"Palatino Linotype",5)
 LoadFont(1,"Palatino Linotype",25)
 LoadFont(2,"Palatino Linotype",80)
@@ -325,7 +325,7 @@ StatusBarProgress(0,1,0)
     AmbientColor(RGB(255,255,255))
     Parse3DScripts()
     ;Sun(10,400,10,RGB(255,240,200))
- 
+    KeyboardMode(#PB_Keyboard_AllowSystemKeys)
     
     EnableWorldPhysics(#False)
     EnableWorldCollisions(#False)
@@ -933,9 +933,9 @@ Repeat
    ElseIf g_EditMode = #mode_chunksel_nodel
      If KeyboardReleased(#PB_Key_Return)
        AddElement(Markers())
-       Markers()\sx = GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleX)
-       Markers()\sy = GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleY)
-       Markers()\sz = GetEntityAttribute(#ToolFaceTop,#PB_Entity_ScaleZ)
+       Markers()\sx = toolBox\sx
+       Markers()\sy = toolBox\sy
+       Markers()\sz = toolBox\sz
        Markers()\x = NodeX(#ToolBlock)
        Markers()\y = NodeY(#ToolBlock)
        Markers()\z = NodeZ(#ToolBlock)
@@ -1080,8 +1080,8 @@ End
 
 
 ; IDE Options = PureBasic 5.72 (Windows - x64)
-; CursorPosition = 763
-; FirstLine = 732
+; CursorPosition = 930
+; FirstLine = 895
 ; EnableXP
 ; Executable = test.exe
 ; CPU = 1

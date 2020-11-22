@@ -343,7 +343,7 @@ Procedure SaveModifiedChunk(x.f,z.f,y.f, rotation)
           FreeMemory(*destbuff)
           FreeMemory(*srcbuff)
           CloseFile(file)
-          CloseWindow(progressWindow)
+          closeProgress(progH)
           ProcedureReturn 0
         EndIf
         NewMap customBlocks.xy(16)
@@ -382,6 +382,7 @@ Procedure SaveModifiedChunk(x.f,z.f,y.f, rotation)
       
       NewMap affectedChunks.xy()
       thischunk.xy
+      db = OpenDatabase(#PB_Any, g_saveDir+g_LastWorld+"/chunkdata.sqlite", "", "",#PB_Database_SQLite)
       For blockx = 0 To sx
         For blocky = 0 To sy
           cbx.f = blockx
@@ -398,16 +399,50 @@ Procedure SaveModifiedChunk(x.f,z.f,y.f, rotation)
               FreeMemory(*srcbuff)
             EndIf
             CloseFile(file)
-            CloseWindow(progressWindow)
+            closeProgress(progH)
             ProcedureReturn 0
+          Else
+            If db
+              If DatabaseQuery(db,"SELECT chunkid FROM CHUNKDATA WHERE chunkid = "+Str(thischunk\vis))
+                If Not NextDatabaseRow(db)
+                  If FileSize(g_saveDir+g_LastWorld+"/"+Str(thischunk\vis)+".chunks") < 10
+                    MessageRequester("Error","The insertion overlaps at least one deleted chunk, only generated chunnks can be manipulated!")
+                    If(*destbuff)
+                      FreeMemory(*destbuff)
+                    EndIf
+                    If *srcbuff
+                      FreeMemory(*srcbuff)
+                    EndIf
+                    CloseFile(file)
+                    closeProgress(progH)
+                    FinishDatabaseQuery(db)
+                    CloseDatabase(db)
+                    ProcedureReturn 0
+                  EndIf
+                EndIf
+                FinishDatabaseQuery(db)
+              EndIf
+            ElseIf FileSize(g_saveDir+g_LastWorld+"/"+Str(thischunk\vis)+".chunks") < 10
+              MessageRequester("Error","The insertion overlaps at least one deleted chunk, only generated chunnks can be manipulated!")
+              If(*destbuff)
+                FreeMemory(*destbuff)
+              EndIf
+              If *srcbuff
+                FreeMemory(*srcbuff)
+              EndIf
+              CloseFile(file)
+              closeProgress(progH)
+              ProcedureReturn 0
+            EndIf
           EndIf
-          
           affectedChunks(Str(thischunk\vis))\vis = thischunk\vis
           affectedChunks()\x = thischunk\x
           affectedChunks()\y = thischunk\y
         Next
       Next
-      
+      If db
+        CloseDatabase(db)
+      EndIf
       
       ResetMap(affectedChunks())
       done = 0
@@ -565,7 +600,7 @@ Procedure SaveBlockFill(x.f,z.f,y.f, id, cID)
       getChunk(@thischunk,cbx+startX,cby+startY)
       If(thischunk\vis = -1)
         MessageRequester("Error","The insertion overlaps at least one not yet generated chunk, only generated chunnks can be manipulated!")
-        CloseWindow(progressWindow)
+        closeProgress(progH)
         ProcedureReturn 0
       EndIf
       
@@ -638,7 +673,7 @@ Procedure SaveBlockFill(x.f,z.f,y.f, id, cID)
   ProcedureReturn 1
 EndProcedure
 ; IDE Options = PureBasic 5.72 (Windows - x64)
-; CursorPosition = 272
-; FirstLine = 252
+; CursorPosition = 583
+; FirstLine = 572
 ; Folding = -
 ; EnableXP

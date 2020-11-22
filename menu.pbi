@@ -378,7 +378,7 @@ Procedure HandleMenuEvents(evMenu)
           updateMsgBox(g_EditMode, currentchunk\vis)
           ScaleToolBlock(32.01,200.01,32.01)
           MoveNode(#ToolBlock,Round(CameraX(0)/16,#PB_Round_Up)*16,Round(CameraY(0),#PB_Round_Up)-25,Round(CameraZ(0)/16,#PB_Round_Up)*16,#PB_Absolute)
-          MoveNode(#ToolBlock,CameraDirectionX(0)*16,0,CameraDirectionZ(0)*16,#PB_Relative)
+          MoveNode(#ToolBlock,CameraDirectionX(0)*32,0,CameraDirectionZ(0)*32,#PB_Relative)
           MoveNode(#ToolBlock,Round(NodeX(#ToolBlock)/16,#PB_Round_Up)*16-0.26,Round(NodeY(#ToolBlock),#PB_Round_Up),Round(NodeZ(#ToolBlock)/16,#PB_Round_Up)*16-0.26,#PB_Absolute)
         Case #menu_remove_marker:
           ResetList(markers())
@@ -501,8 +501,36 @@ Procedure HandleMenuEvents(evMenu)
             HideToolBlock()
           EndIf
         Case #menu_copyFilesToDB:
-          If MessageRequester("Attention", "Would you really like To copy all single chunk files into the sqlite database? It is recommended to do a backup of your world before this!",#PB_MessageRequester_YesNo) = #PB_MessageRequester_Yes
-            db = OpenDatabase(#PB_Any, g_saveDir+g_LastWorld+"/"+"chunkdata.sqlite", "", "",#PB_Database_SQLite)
+          If MessageRequester("Attention", "Would you like to create the cleaned world as copy? If not, the cleaning will be done on the actual world (backup recomended).",#PB_MessageRequester_YesNo) = #PB_MessageRequester_Yes
+            copyclean = 1
+            append.s = "(cleaned)"
+            While FileSize(g_saveDir+g_LastWorld+append) = -2 Or FileSize(g_saveDir+g_LastWorld+append) > 0
+              num +1
+              append = "(cleaned "+Str(num)+")"
+            Wend
+            res = MessageRequester("Attention", "Cyube3dit will create a cleaned copy of this world named '"+g_LastWorld+Append+"' would you like to continue?",#PB_MessageRequester_YesNo)
+          Else
+            res = MessageRequester("Attention", "Cyube3dit will cleaned this world ("+g_LastWorld+") would you like to continue? A backup is recommendet!",#PB_MessageRequester_YesNo)
+            copyclean = 0
+          EndIf
+          If res = #PB_MessageRequester_Yes  
+            If copyclean = 1
+              CreateDirectory(g_saveDir+g_LastWorld+append)
+              CopyFile(g_saveDir+g_LastWorld+"/"+"chunkdata.sqlite",g_saveDir+g_LastWorld+append+"/"+"chunkdata.sqlite")
+              dir = ExamineDirectory(#PB_Any,g_saveDir+g_LastWorld+"/","*.important")
+              If dir
+                While NextDirectoryEntry(dir)
+                  If GetExtensionPart(DirectoryEntryName(dir)) = "important"
+                    CopyFile(g_saveDir+g_LastWorld+"/"+DirectoryEntryName(dir),g_saveDir+g_LastWorld+append+"/"+DirectoryEntryName(dir))
+                  EndIf
+                Wend
+                FinishDirectory(dir)
+              EndIf
+              db = OpenDatabase(#PB_Any, g_saveDir+g_LastWorld+append+"/"+"chunkdata.sqlite", "", "",#PB_Database_SQLite)
+            Else
+              db = OpenDatabase(#PB_Any, g_saveDir+g_LastWorld+"/"+"chunkdata.sqlite", "", "",#PB_Database_SQLite)
+            EndIf
+            
             filecount = 0
             currfile = 0
             existing = 0
@@ -523,7 +551,10 @@ Procedure HandleMenuEvents(evMenu)
                   If GetExtensionPart(DirectoryEntryName(dir)) = "chunks"
                     currfile + 1
                     progress = (currfile * 100) / filecount
-                    UpdateProgress(progH,"Copy Chunks into database..."+Str(progress)+"%",progress)
+                    If progress > progress_old
+                      UpdateProgress(progH,"Copy Chunks into database..."+Str(progress)+"%",progress)
+                      progress_old = progress
+                    EndIf
                     chnk = ReadFile(#PB_Any,g_saveDir+g_LastWorld+"/"+DirectoryEntryName(dir),#PB_File_SharedRead)
                     If chnk
                       id = Val(GetFilePart(DirectoryEntryName(dir),#PB_FileSystem_NoExtension))
@@ -537,7 +568,9 @@ Procedure HandleMenuEvents(evMenu)
                           SetDatabaseBlob(db,0,*chnkmem,Lof(chnk))
                           CloseFile(chnk)
                           If CheckDatabaseUpdate(db, "INSERT INTO CHUNKDATA (CHUNKID, DATA) VALUES ("+Str(id)+", ?);")
-                            DeleteFile(g_saveDir+g_LastWorld+"/"+DirectoryEntryName(dir))
+                            If copyclean = 0
+                              DeleteFile(g_saveDir+g_LastWorld+"/"+DirectoryEntryName(dir))
+                            EndIf
                           Else
                             MessageRequester("Warning","Chunk with ID "+Str(id)+" could not be copied, operation aborted!")
                             CloseDatabase(db)
@@ -573,7 +606,11 @@ Procedure HandleMenuEvents(evMenu)
                   If GetExtensionPart(DirectoryEntryName(dir)) = "chunkmon"
                     currfile + 1
                     progress = (currfile * 100) / filecount
-                    UpdateProgress(progH,"Copy Chunk Meshes into database..."+Str(progress)+"%",progress)
+                    If progress > progress_old
+                      UpdateProgress(progH,"Copy Chunk Meshes into database..."+Str(progress)+"%",progress)
+                      progress_old = progress
+                    EndIf
+                    
                     chnk = ReadFile(#PB_Any,g_saveDir+g_LastWorld+"/"+DirectoryEntryName(dir),#PB_File_SharedRead)
                     If chnk
                       id = Val(GetFilePart(DirectoryEntryName(dir),#PB_FileSystem_NoExtension))
@@ -587,7 +624,9 @@ Procedure HandleMenuEvents(evMenu)
                           SetDatabaseBlob(db,0,*chnkmem,Lof(chnk))
                           CloseFile(chnk)
                           If CheckDatabaseUpdate(db, "INSERT INTO MESHOBJECTS (CHUNKID,DATA) VALUES ("+Str(id)+", ?);")
-                            DeleteFile(g_saveDir+g_LastWorld+"/"+DirectoryEntryName(dir))
+                            If copyclean = 0
+                              DeleteFile(g_saveDir+g_LastWorld+"/"+DirectoryEntryName(dir))
+                            EndIf
                           Else
                             MessageRequester("Warning","Meshes of Chunk with ID "+Str(id)+" could not be copied, operation aborted!")
                             CloseDatabase(db)
@@ -619,7 +658,7 @@ Procedure HandleMenuEvents(evMenu)
               EndIf
               CloseProgress(progH)
               CloseDatabase(db)
-              If existing
+              If existing And copyclean = 0
                 If MessageRequester("Leftover files","There are "+Str(existing)+" files left over, they were copied already by the game, should they be removed as well?",#PB_MessageRequester_YesNo) = #PB_MessageRequester_Yes
                   dir = ExamineDirectory(#PB_Any,g_saveDir+g_LastWorld+"/","*.*")
                   If dir
@@ -632,7 +671,11 @@ Procedure HandleMenuEvents(evMenu)
                   EndIf
                 EndIf
               EndIf
-              MessageRequester("Done!","All done, please check, if everything is OK before getting rid of your Backup :)")
+              If copyclean
+                MessageRequester("Done!","All done, please restart cyubE3dit to make the new copy appear in the world list.")
+              Else
+                MessageRequester("Done!","All done, please check, if everything is OK before getting rid of your Backup :)")
+              EndIf
             Else
               MessageRequester("Impossible","There is currently no database for this world, please open the world at least once with the current CyubeVR Version before running this operation.")
             EndIf
@@ -667,7 +710,7 @@ Procedure HandleMenuEvents(evMenu)
   EndProcedure
   
 ; IDE Options = PureBasic 5.72 (Windows - x64)
-; CursorPosition = 153
-; FirstLine = 141
+; CursorPosition = 380
+; FirstLine = 353
 ; Folding = -
 ; EnableXP
